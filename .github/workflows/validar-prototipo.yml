@@ -17,55 +17,18 @@ jobs:
       - name: Baixar repositório
         uses: actions/checkout@v4
 
-      - name: Preparar diagnóstico do Deno
+      - name: Instalar Deno 2.9.4 com checksum
         run: |
-          mkdir -p .ci
-          printf 'diagnostico_iniciado\n' > .ci/deno-diagnostico.txt
+          curl -fsSLo /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.4/deno-x86_64-unknown-linux-gnu.zip
+          printf '%s  %s\n' 'c24f955d9fbfe0ea5ae2b501c8e71ae76e31e4c9782390a54a284b3364fda725' '/tmp/deno.zip' | sha256sum -c -
+          unzip -q /tmp/deno.zip -d "$HOME/.local/bin"
+          printf '%s\n' "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Configurar Deno
-        id: setup_deno
-        continue-on-error: true
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-
-      - name: Registrar resultado do setup Deno
-        if: always()
-        run: |
-          printf 'setup_outcome=%s\n' '${{ steps.setup_deno.outcome }}' >> .ci/deno-diagnostico.txt
-          if command -v deno >/dev/null 2>&1; then
-            deno --version >> .ci/deno-diagnostico.txt 2>&1
-          else
-            printf 'deno_not_found\n' >> .ci/deno-diagnostico.txt
-          fi
+      - name: Exibir versão do Deno
+        run: deno --version
 
       - name: Validar Edge Function com Deno
-        id: deno_check
-        if: steps.setup_deno.outcome == 'success'
-        continue-on-error: true
-        run: |
-          set +e
-          deno check supabase/functions/cognitive-ledger-api/index.ts > .ci/deno-check.log 2>&1
-          status=$?
-          cat .ci/deno-check.log
-          printf 'deno_check_exit=%s\n' "$status" >> .ci/deno-diagnostico.txt
-          exit "$status"
-
-      - name: Registrar check não executado
-        if: steps.setup_deno.outcome != 'success'
-        run: printf 'deno_check_not_run\n' >> .ci/deno-diagnostico.txt
-
-      - name: Publicar diagnóstico do Deno
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: deno-check
-          path: .ci/
-          if-no-files-found: error
-
-      - name: Falhar se setup ou Deno check falhou
-        if: steps.setup_deno.outcome != 'success' || steps.deno_check.outcome == 'failure'
-        run: exit 1
+        run: deno check supabase/functions/cognitive-ledger-api/index.ts
 
       - name: Validar sintaxe JavaScript
         run: |

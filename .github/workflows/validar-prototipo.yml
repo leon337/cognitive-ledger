@@ -17,34 +17,54 @@ jobs:
       - name: Baixar repositório
         uses: actions/checkout@v4
 
+      - name: Preparar diagnóstico do Deno
+        run: |
+          mkdir -p .ci
+          printf 'diagnostico_iniciado\n' > .ci/deno-diagnostico.txt
+
       - name: Configurar Deno
+        id: setup_deno
+        continue-on-error: true
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
 
+      - name: Registrar resultado do setup Deno
+        if: always()
+        run: |
+          printf 'setup_outcome=%s\n' '${{ steps.setup_deno.outcome }}' >> .ci/deno-diagnostico.txt
+          if command -v deno >/dev/null 2>&1; then
+            deno --version >> .ci/deno-diagnostico.txt 2>&1
+          else
+            printf 'deno_not_found\n' >> .ci/deno-diagnostico.txt
+          fi
+
       - name: Validar Edge Function com Deno
         id: deno_check
+        if: steps.setup_deno.outcome == 'success'
         continue-on-error: true
         run: |
           set +e
-          deno check supabase/functions/cognitive-ledger-api/index.ts > deno-check.log 2>&1
+          deno check supabase/functions/cognitive-ledger-api/index.ts > .ci/deno-check.log 2>&1
           status=$?
-          cat deno-check.log
-          printf '%s\n' "$status" > deno-check.exit
+          cat .ci/deno-check.log
+          printf 'deno_check_exit=%s\n' "$status" >> .ci/deno-diagnostico.txt
           exit "$status"
+
+      - name: Registrar check não executado
+        if: steps.setup_deno.outcome != 'success'
+        run: printf 'deno_check_not_run\n' >> .ci/deno-diagnostico.txt
 
       - name: Publicar diagnóstico do Deno
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: deno-check
-          path: |
-            deno-check.log
-            deno-check.exit
+          path: .ci/
           if-no-files-found: error
 
-      - name: Falhar se Deno check falhou
-        if: steps.deno_check.outcome == 'failure'
+      - name: Falhar se setup ou Deno check falhou
+        if: steps.setup_deno.outcome != 'success' || steps.deno_check.outcome == 'failure'
         run: exit 1
 
       - name: Validar sintaxe JavaScript

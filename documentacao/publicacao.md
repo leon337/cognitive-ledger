@@ -15,14 +15,11 @@ https://cognitive-ledger-prototipo.onrender.com
 
 A publicação está materializada como **Static Site no Render**, vinculada à branch `design/cognitive-ledger-foundation`, com Auto-Deploy habilitado e `publishPath: site`.
 
-Deploy inicial verificado como `live`:
+## Estado visual atual
 
-```text
-service: srv-da3u2tajobas739pb8q0
-deploy: dep-da3u2tqjobas739pb9ug
-commit: ae3d08ae6362a7b894b64cda3c9574c4ed457ed0
-status: live
-```
+O protótipo usa tema escuro como padrão. A escolha visual ainda é estrutural e simples; identidade visual, paleta refinada e acabamento permanecem para a etapa posterior com Google Stitch.
+
+A aplicação não exibe o fluxo operacional da equipe MCF. Convocações, análises operacionais e handoffs pertencem ao histórico da conversa onde a missão é executada, e não à superfície do Cognitive Ledger.
 
 ## Conteúdo publicável
 

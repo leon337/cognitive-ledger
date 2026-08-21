@@ -59,6 +59,20 @@ async function lerCorpo(req, limite = 1024 * 1024) {
   return Buffer.concat(partes);
 }
 
+export async function verificarApi({ usuario, senha, apiUrl, fetchImpl = fetch }) {
+  if (!usuario || !senha || !apiUrl) throw new Error("usuario, senha e apiUrl são obrigatórios");
+  const apiBase = apiUrl.replace(/\/+$/, "");
+  const authorization = `Basic ${Buffer.from(`${usuario}:${senha}`).toString("base64")}`;
+  const resposta = await fetchImpl(`${apiBase}/timeline`, {
+    method: "GET",
+    headers: { Authorization: authorization, Accept: "application/json" }
+  });
+  if (!resposta.ok) throw new Error(`API indisponível ou não autorizada: ${resposta.status}`);
+  const dados = await resposta.json();
+  if (!dados || !Array.isArray(dados.registros)) throw new Error("Contrato de timeline inválido");
+  return { status: resposta.status, total: dados.registros.length };
+}
+
 export function criarServidor({ pastaPublica, usuario, senha, apiUrl, fetchImpl = fetch }) {
   if (!pastaPublica || !usuario || !senha || !apiUrl) {
     throw new Error("pastaPublica, usuario, senha e apiUrl são obrigatórios");

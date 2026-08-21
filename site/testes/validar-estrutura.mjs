@@ -31,6 +31,14 @@ for (const id of [
 assert.match(html, /lang="pt-BR"/, "HTML deve declarar português do Brasil");
 assert.match(html, /Registro cognitivo/i, "HTML deve distinguir Registro Cognitivo");
 assert.match(html, /Registro de fonte/i, "HTML deve distinguir Registro de Fonte");
+assert.doesNotMatch(
+  html,
+  /Bastidores da missão|titulo-equipe-mcf|Equipe MCF aplicada/i,
+  "A aplicação não deve exibir o fluxo operacional da equipe MCF"
+);
+assert.match(css, /color-scheme:\s*dark/i, "CSS deve declarar esquema de cores escuro");
+assert.match(css, /--cor-fundo:\s*#[0-9a-f]{6}/i, "CSS deve declarar token de fundo escuro");
+assert.match(css, /--cor-texto:\s*#[0-9a-f]{6}/i, "CSS deve declarar token de texto");
 assert.match(css, /@media/, "CSS deve conter regra responsiva");
 assert.match(appJs, /normalizarTexto/, "Aplicação deve normalizar busca textual");
 assert.match(appJs, /renderizarLinhaDoTempo/, "Aplicação deve renderizar linha do tempo");

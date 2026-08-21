@@ -26,6 +26,7 @@
 - Ausência de evidência, conflito e degradação semântica devem aparecer explicitamente.
 - O protótipo público não recebe nenhuma rota, token ou dado real do Ledger.
 - O pacote de contexto usa `limite=8` por padrão e máximo absoluto de `12` eventos.
+- Em consultas sem filtro exato, `score_total < 0.30` não é evidência suficiente e não pode ser promovido a resposta factual; o resultado deve ser `evidencia_insuficiente`. Esse limiar deve ser validado contra o corpus real durante os testes, e qualquer alteração exige evidência registrada no relatório de validação.
 - Embeddings de eventos e consultas usam o mesmo modelo e dimensão: `text-embedding-3-large`, `1024` dimensões.
 - A geração de embedding não pode transformar a escrita operacional existente em uma operação dependente da OpenAI.
 
@@ -175,7 +176,7 @@ alter table public.eventos_cognitivos
   - similaridade semântica: 0,60;
   - melhor similaridade textual (`titulo`, `resumo`, `contexto`): 0,25;
   - recência normalizada: 0,15.
-  Embedding `NULL` recebe componente semântico zero, permitindo fallback textual.
+  Embedding `NULL` recebe componente semântico zero, permitindo fallback textual. Quando não houver filtro exato, somente linhas com `score_total >= 0.30` podem ser tratadas como evidência recuperada.
 - [ ] **Step 5: travar execução pública** — revogar execute da RPC para `public`, `anon` e `authenticated`; conceder somente ao `service_role`.
 - [ ] **Step 6: executar migration e verificar GREEN** — tabelas existem, RLS ligado, nenhuma policy pública criada, colunas vetoriais com 1024 dimensões e RPC não executável pelos papéis públicos.
 - [ ] **Step 7: Security Advisor** — registrar qualquer WARN/ERROR novo; não aceitar regressão silenciosa.
@@ -199,12 +200,12 @@ alter table public.eventos_cognitivos
 
 - [ ] **Step 1: GATE G3** — usuário informa qual e-mail será a identidade do proprietário; criar/confirmar usuário Supabase Auth por mecanismo de magic link. O endereço não entra em Git.
 - [ ] **Step 2: configurar assinatura assimétrica** — usar RS256 ou ES256 e confirmar JWKS público antes de continuar.
-- [ ] **Step 3: habilitar OAuth 2.1 Server** e registro dinâmico de clientes MCP; configurar authorization path para `https://<host-mcp>/oauth/consent` quando o serviço remoto existir.
-- [ ] **Step 4: escrever teste RED do metadata** — `oauth.test.mjs` espera resposta JSON em `/.well-known/oauth-protected-resource` com `resource` apontando para `/mcp` e `authorization_servers` contendo `${SUPABASE_URL}/auth/v1`.
+- [ ] **Step 3: habilitar OAuth 2.1 Server** e registro dinâmico de clientes MCP. Durante desenvolvimento, usar a URL HTTPS temporária do túnel que expõe o serviço MCP local como authorization path; na Tarefa 8, substituir pela URL definitiva retornada pelo novo serviço Render antes do teste ChatGPT.
+- [ ] **Step 4: escrever teste RED do metadata** — `oauth.test.mjs` espera resposta JSON em `/.well-known/oauth-protected-resource` com `resource` igual a `${PUBLIC_BASE_URL}/mcp` e `authorization_servers` contendo `${SUPABASE_URL}/auth/v1`.
 - [ ] **Step 5: implementar `metadataRecursoProtegido(baseUrl, supabaseUrl)`** em `mcp/src/oauth.mjs` e fazer teste passar.
 - [ ] **Step 6: implementar consent UI mínima** com `supabase-js`: ler `authorization_id`, consultar `supabase.auth.oauth.getAuthorizationDetails`, exigir sessão do proprietário, permitir magic link se necessário, renderizar nome/redirect URI e usar `approveAuthorization`/`denyAuthorization`.
 - [ ] **Step 7: verificar boundary** — consent UI usa somente URL + publishable key; nenhum secret/service-role é enviado ao navegador.
-- [ ] **Step 8: GATE G2 probe** — completar uma autorização OAuth real em cliente de teste/MCP Inspector e verificar access token válido, presença de `client_id`, refresh/reautorização e revogação do grant.
+- [ ] **Step 8: GATE G2 probe em desenvolvimento** — completar uma autorização OAuth real em cliente de teste/MCP Inspector através do túnel HTTPS e verificar access token válido, presença de `client_id`, refresh/reautorização e revogação do grant. O G2 só é encerrado definitivamente após repetição no endpoint Render da Tarefa 8.
 - [ ] **Step 9: commit** — `git commit -m "feat: adicionar oauth do cliente mcp"`.
 
 **Aceite:** um cliente OAuth autorizado pelo proprietário recebe token verificável com `client_id`; revogação invalida seu acesso sem afetar o login privado.
@@ -231,7 +232,7 @@ alter table public.eventos_cognitivos
 - [ ] **Step 2: RED — owner errado** — token válido com `sub` diferente de `COGNITIVE_LEDGER_OWNER_ID` deve resultar 403.
 - [ ] **Step 3: RED — capacidades/revogação** — cliente inativo ou sem capacidade recebe 403; revogar A não afeta B.
 - [ ] **Step 4: implementar validação JWT** usando claims Supabase verificadas, exigindo `iss`, `aud=authenticated`, `exp`, `sub` e `client_id`. Não confiar em JWT apenas decodificado.
-- [ ] **Step 5: registrar cliente autorizado** — no primeiro request aprovado do owner, `upsert` por `client_id` com capacidades padrão `['ler_diario','buscar_eventos','recuperar_contexto']` e `ativo=true`. Não incluir `ler_fonte_bruta`.
+- [ ] **Step 5: registrar cliente autorizado** — no primeiro request aprovado do owner, `upsert` por `client_id` com `rotulo=client_id`, capacidades padrão `['ler_diario','buscar_eventos','recuperar_contexto']` e `ativo=true`. Um rótulo humano pode ser preenchido depois sem afetar identidade/autorização. Não incluir `ler_fonte_bruta`.
 - [ ] **Step 6: RED — auditoria falha fechada** — simular falha de insert em `auditoria_acessos`; resposta deve ser 503 e corpo não pode conter título/resumo/eventos.
 - [ ] **Step 7: implementar `auditarLeitura`** com campos aprovados: client, operação, finalidade resumida, IDs, quantidade, fonte bruta, justificativa, resultado, degradado, erro_codigo.
 - [ ] **Step 8: preservar Basic legado** — testes provam que `GET /timeline` e `POST /registros` continuam usando o mecanismo interno atual e que Bearer não ganha escrita.
@@ -298,8 +299,8 @@ type ResultadoRecuperacao = {
 - [ ] **Step 1: RED — `ler_diario`** — ordenar por data desc, aplicar filtros estruturados, default 8, hard max 12, nunca devolver `conteudo_bruto`.
 - [ ] **Step 2: implementar `GET /v1/diario`** e auditar com operação `ler_diario` antes de devolver JSON.
 - [ ] **Step 3: RED — busca semântica não literal** — consulta equivalente a “quando percebi que a equipe funcionava como planejado?” precisa recuperar o evento `Materialização profissional do ecossistema MCF + Cognitive Ledger` no conjunto superior quando embeddings estão disponíveis.
-- [ ] **Step 4: implementar `POST /v1/buscar`** chamando `buscar_eventos_hibrido`; aplicar filtros antes do ranking; score baixo/nenhum candidato retorna `evidencia_insuficiente` em vez de forçar resposta.
-- [ ] **Step 5: RED — fallback** — forçar falha de embedding da consulta; resposta usa texto/filtros, `degradado=true` e é auditada como degradada.
+- [ ] **Step 4: implementar `POST /v1/buscar`** chamando `buscar_eventos_hibrido`; aplicar filtros antes do ranking. Sem filtro exato, nenhum candidato com `score_total >= 0.30` significa `evidencia_insuficiente`; não retornar o “melhor” candidato fraco como se fosse evidência.
+- [ ] **Step 5: RED — fallback** — forçar falha de embedding da consulta; resposta usa texto/filtros, `degradado=true` e é auditada como degradada. O mesmo limiar de 0.30 se aplica ao score textual/recência recalculado no modo degradado.
 - [ ] **Step 6: RED — pacote epistemológico** — `POST /v1/contexto` deve preservar arrays de decisões, hipóteses, questões abertas e próximos passos; a API não escreve uma recomendação final.
 - [ ] **Step 7: relações e conflitos** — após ranking inicial, seguir relações de primeiro grau apenas dentro do hard max 12. Marcar conflito somente quando houver relação explícita do conjunto `{contradiz, revisa, substitui}`; não inventar conflito por semelhança textual.
 - [ ] **Step 8: RED — fonte bruta** — `/v1/fonte` falha 403 sem `ler_fonte_bruta`, falha 400 sem justificativa não vazia e, quando permitido, retorna somente a fonte do evento solicitado.
@@ -333,7 +334,7 @@ type ResultadoRecuperacao = {
 - [ ] **Step 2: RED — descritores** — testes exigem nomes exatos, `readOnlyHint: true`, `destructiveHint: false` e schemas com limites (`1..12`).
 - [ ] **Step 3: implementar `registrarFerramentas(server, cliente)`** sem lógica de negócio duplicada; cada handler apenas valida input, chama a rota correspondente e preserva `estado`, `degradado`, IDs e proveniência.
 - [ ] **Step 4: RED — token obrigatório** — `/mcp` sem Bearer retorna 401 com metadata OAuth apropriada; token inválido não chama a API.
-- [ ] **Step 5: implementar validação local em `oauth.mjs`** via JWKS do Supabase, verificando issuer, audience, exp, `sub` e `client_id`; a API revalida novamente, por defesa em profundidade.
+- [ ] **Step 5: implementar validação local em `oauth.mjs`** via JWKS do Supabase, verificando issuer, audience, exp e presença de `sub`/`client_id`; a API revalida e verifica owner/capacidades, por defesa em profundidade.
 - [ ] **Step 6: implementar `cliente-ledger.mjs`**: encaminhar exatamente `Authorization: Bearer <token>` para a Edge Function; nunca aceitar service-role/internal Basic no ambiente MCP.
 - [ ] **Step 7: implementar Streamable HTTP MCP em `/mcp`** e `GET /health` sem dados privados; servir também OAuth metadata e consent UI.
 - [ ] **Step 8: RED — propagação de erro** — 401/403/503/evidência insuficiente da API devem chegar ao modelo como estado explícito; handler não cria conteúdo substituto.
@@ -353,7 +354,7 @@ type ResultadoRecuperacao = {
 **Runtime MCP:**
 - Build: `npm --prefix mcp ci`
 - Start: `npm --prefix mcp start`
-- Endpoint: `https://<servico-mcp>.onrender.com/mcp`
+- Endpoint final: `${PUBLIC_BASE_URL}/mcp`, em que `PUBLIC_BASE_URL` é a URL HTTPS retornada pelo Render para o serviço `cognitive-ledger-mcp`.
 
 **Env permitidas no MCP:**
 - `COGNITIVE_LEDGER_API_URL`
@@ -366,12 +367,13 @@ type ResultadoRecuperacao = {
 
 - [ ] **Step 1: ampliar CI** — incluir `node --test testes/servidor-diario.test.mjs`, `npm --prefix mcp ci` e `npm --prefix mcp test`; manter validação existente do site.
 - [ ] **Step 2: criar serviço Render separado** e configurar apenas env permitidas; verificar que logs não imprimem Authorization/token.
-- [ ] **Step 3: validar `/health`, OAuth metadata e `/mcp` remoto** com MCP Inspector.
-- [ ] **Step 4: revogação independente** — autorizar dois clients de teste, revogar A e provar que A recebe 403 enquanto B continua lendo.
-- [ ] **Step 5: GATE G1** — no ChatGPT web, habilitar Developer Mode e criar app apontando para o endpoint MCP remoto. Se a conta/plano não permitir, registrar `BLOQUEADO POR PRODUTO CHATGPT` e parar antes de Teste A/B.
-- [ ] **Step 6: concluir OAuth no ChatGPT** e usar “Scan Tools”; confirmar que as ferramentas registradas aparecem como leitura.
-- [ ] **Step 7: snapshot de segurança** — antes dos testes finais, consultar quantidade de `eventos_cognitivos`, Security Advisor e estado do protótipo público.
-- [ ] **Step 8: commit de CI/config docs** — `git commit -m "ci: validar servidor mcp e fluxo cross-chat"`.
+- [ ] **Step 3: atualizar Supabase OAuth authorization path** para `${PUBLIC_BASE_URL}/oauth/consent`, substituindo a URL temporária de desenvolvimento; repetir o G2 no endpoint definitivo.
+- [ ] **Step 4: validar `/health`, OAuth metadata e `/mcp` remoto** com MCP Inspector.
+- [ ] **Step 5: revogação independente** — autorizar dois clients de teste, revogar A e provar que A recebe 403 enquanto B continua lendo.
+- [ ] **Step 6: GATE G1** — no ChatGPT web, habilitar Developer Mode e criar app apontando para `${PUBLIC_BASE_URL}/mcp`. Se a conta/plano não permitir, registrar `BLOQUEADO POR PRODUTO CHATGPT` e parar antes de Teste A/B.
+- [ ] **Step 7: concluir OAuth no ChatGPT** e usar “Scan Tools”; confirmar que as ferramentas registradas aparecem como leitura.
+- [ ] **Step 8: snapshot de segurança** — antes dos testes finais, consultar quantidade de `eventos_cognitivos`, Security Advisor e estado do protótipo público.
+- [ ] **Step 9: commit de CI/config docs** — `git commit -m "ci: validar servidor mcp e fluxo cross-chat"`.
 
 **Aceite:** MCP está remoto, autenticado e conectável pelo ChatGPT elegível sem alterar o serviço do diário privado.
 
@@ -393,11 +395,12 @@ type ResultadoRecuperacao = {
 - [ ] **Step 6: testar fonte bruta** — cliente padrão recebe 403; conceder `ler_fonte_bruta` somente em teste controlado, usar justificativa, verificar retorno mínimo e auditoria específica, então remover a capacidade.
 - [ ] **Step 7: testar falha de auditoria em ambiente controlado** — forçar erro de persistência e comprovar 503 sem conteúdo privado.
 - [ ] **Step 8: testar degradação semântica** — indisponibilizar geração de embedding de consulta em ambiente de teste e comprovar fallback + `degradado=true`.
-- [ ] **Step 9: segurança final** — Security Advisor, logs Render/Supabase sem segredo, protótipo público sem acesso ao DB real, MCP sem service-role.
-- [ ] **Step 10: corrigir débito documental** — em `captura-e-recuperacao.md`, substituir a frase de teste natural pendente por estado verificado; não reescrever a história.
-- [ ] **Step 11: atualizar documentação de autenticação** com OAuth por cliente e deixar claro que o login humano privado continua separado e que recuperação de senha permanece outra feature.
-- [ ] **Step 12: atualizar status da especificação** para `IMPLEMENTADO / VALIDADO FASE 1` somente se todos os critérios A/B e segurança tiverem evidência; caso contrário usar `IMPLEMENTADO COM PENDÊNCIAS` ou `BLOQUEADO` com motivo factual.
-- [ ] **Step 13: commit** — `git commit -m "test: validar acesso cross-chat fase 1"`.
+- [ ] **Step 9: calibrar e registrar o limiar de 0.30** — verificar o corpus real e exemplos positivos/negativos; manter 0.30 se separar adequadamente evidência de ruído. Se mudar, registrar a justificativa e resultados no relatório de auditoria antes de alterar a constante.
+- [ ] **Step 10: segurança final** — Security Advisor, logs Render/Supabase sem segredo, protótipo público sem acesso ao DB real, MCP sem service-role.
+- [ ] **Step 11: corrigir débito documental** — em `captura-e-recuperacao.md`, substituir a frase de teste natural pendente por estado verificado; não reescrever a história.
+- [ ] **Step 12: atualizar documentação de autenticação** com OAuth por cliente e deixar claro que o login humano privado continua separado e que recuperação de senha permanece outra feature.
+- [ ] **Step 13: atualizar status da especificação** para `IMPLEMENTADO / VALIDADO FASE 1` somente se todos os critérios A/B e segurança tiverem evidência; caso contrário usar `IMPLEMENTADO COM PENDÊNCIAS` ou `BLOQUEADO` com motivo factual.
+- [ ] **Step 14: commit** — `git commit -m "test: validar acesso cross-chat fase 1"`.
 
 **Aceite final:** Testes A e B passam em chats novos, toda leitura possui auditoria, não houve escrita cross-chat, raw source permanece restrita e não há regressão no diário privado ou protótipo público.
 

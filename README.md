@@ -34,6 +34,7 @@ Português do Brasil é o idioma operacional deste repositório.
 
 - `documentacao/autenticacao-e-recuperacao-de-acesso.md` — descreve o mecanismo atual de autenticação do diário privado, a separação entre acesso humano e credencial interna, o incidente de perda de senha de 2026-08-21, o retrabalho gerado, a pendência de configuração no Render e a necessidade futura de recuperação autônoma de senha.
 - `documentacao/recomendacoes/2026-08-21-mcp-e-cloud-infrastructure.md` — registra a recomendação de manter a Fase 1 do MCP independente da VPS enquanto `cloud-infrastructure` amadurece seus mecanismos de plataforma; qualquer hospedagem futura na VPS exige reavaliação e novo gate humano.
+- `documentacao/decisoes/2026-08-21-visibilidade-temporaria-repositorio.md` — registra que o repositório foi tornado público temporariamente para destravar o CI, sem alterar a privacidade do diário, dos secrets ou dos dados operacionais.
 
 ## Modelo central
 
@@ -70,9 +71,13 @@ A responsabilidade desta fase é definir o que existe, como as informações se 
 
 ## Privacidade
 
-Este repositório está configurado como **privado**. Mesmo assim, fontes brutas e conteúdo pessoal devem seguir princípio de minimização: armazenar somente o necessário, manter proveniência explícita e separar dados canônicos da superfície publicada do protótipo.
+Este repositório está **público temporariamente** por decisão operacional do proprietário para permitir a continuidade das validações de CI. Essa condição não é uma decisão permanente de visibilidade e deve ser reavaliada quando o motivo operacional deixar de existir.
+
+A visibilidade pública do código **não autoriza a publicação de dados privados do Cognitive Ledger**. Senhas, tokens, API keys, secrets, connection strings reais, dados canônicos do diário e fontes brutas pessoais permanecem proibidos no Git.
 
 O site publicado deve usar dados de demonstração ou conteúdo conscientemente selecionado para exposição.
+
+A decisão temporária e os critérios de reversão estão documentados em `documentacao/decisoes/2026-08-21-visibilidade-temporaria-repositorio.md`.
 
 ## Relação com o MCF
 

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Protótipo estrutural navegável do Cognitive Ledger.">
+  <title>Cognitive Ledger — Protótipo Estrutural</title>
+  <link rel="stylesheet" href="estilos/principal.css">
+</head>
+<body>
+  <a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
+
+  <header class="cabecalho-site">
+    <div>
+      <p class="sobretitulo">Protótipo estrutural</p>
+      <h1>Cognitive Ledger</h1>
+      <p class="descricao-cabecalho">Uma linha do tempo para preservar a evolução de ideias, decisões, aprendizados e projetos entre conversas.</p>
+    </div>
+    <div class="estado-prototipo" aria-label="Estado do protótipo">
+      <strong>Discovery</strong>
+      <span>HTML + CSS + JavaScript simples</span>
+    </div>
+  </header>
+
+  <main id="conteudo-principal" class="aplicacao">
+    <section class="controles" aria-labelledby="titulo-controles">
+      <div class="cabecalho-secao">
+        <div>
+          <p class="sobretitulo">Recuperação</p>
+          <h2 id="titulo-controles">Encontre um registro</h2>
+        </div>
+        <p id="aviso-demonstracao" class="aviso-demonstracao"></p>
+      </div>
+
+      <div class="grade-controles">
+        <label class="campo campo-busca">
+          <span>Buscar</span>
+          <input id="busca" type="search" placeholder="Ex.: MCF, decisão, continuidade..." autocomplete="off">
+        </label>
+
+        <label class="campo">
+          <span>Tipo</span>
+          <select id="filtro-tipo">
+            <option value="">Todos os tipos</option>
+          </select>
+        </label>
+
+        <label class="campo">
+          <span>Projeto</span>
+          <select id="filtro-projeto">
+            <option value="">Todos os projetos</option>
+          </select>
+        </label>
+
+        <button id="limpar-filtros" class="botao-secundario" type="button">Limpar filtros</button>
+      </div>
+
+      <p class="resumo-resultados" aria-live="polite">
+        <strong id="contador-resultados">0</strong>
+        <span id="rotulo-resultados">registros visíveis</span>
+      </p>
+    </section>
+
+    <div class="grade-principal">
+      <section class="painel linha-do-tempo" aria-labelledby="titulo-linha-do-tempo">
+        <div class="cabecalho-painel">
+          <div>
+            <p class="sobretitulo">Histórico</p>
+            <h2 id="titulo-linha-do-tempo">Linha do tempo</h2>
+          </div>
+          <span class="ajuda-curta">Mais recentes primeiro</span>
+        </div>
+
+        <div id="lista-linha-do-tempo"></div>
+
+        <div id="estado-vazio" class="estado-vazio" hidden>
+          <h3>Nenhum registro encontrado</h3>
+          <p>Tente alterar a busca ou os filtros atuais.</p>
+          <button id="limpar-filtros-vazio" class="botao-secundario" type="button">Mostrar todos os registros</button>
+        </div>
+      </section>
+
+      <aside class="painel detalhe" aria-labelledby="titulo-detalhe">
+        <div id="detalhe-inicial" class="detalhe-inicial">
+          <p class="sobretitulo">Registro</p>
+          <h2 id="titulo-detalhe">Selecione um evento</h2>
+          <p>Escolha um item da linha do tempo para inspecionar o registro cognitivo, a proveniência e as relações associadas.</p>
+        </div>
+
+        <article id="detalhe-registro" hidden>
+          <header class="cabecalho-detalhe">
+            <div class="metadados-detalhe">
+              <span id="detalhe-tipo" class="etiqueta"></span>
+              <span id="detalhe-status" class="etiqueta etiqueta-neutra"></span>
+            </div>
+            <time id="detalhe-data"></time>
+            <h2 id="detalhe-titulo"></h2>
+            <p id="detalhe-resumo" class="resumo-detalhe"></p>
+          </header>
+
+          <section class="secao-detalhe">
+            <h3>Contexto</h3>
+            <p id="detalhe-contexto"></p>
+          </section>
+
+          <section class="secao-detalhe">
+            <h3>Registro cognitivo</h3>
+            <div id="bloco-ideias" class="subsecao-detalhe"></div>
+            <div id="bloco-decisoes" class="subsecao-detalhe"></div>
+            <div id="bloco-hipoteses" class="subsecao-detalhe"></div>
+            <div id="bloco-questoes" class="subsecao-detalhe"></div>
+            <div id="bloco-proximos-passos" class="subsecao-detalhe"></div>
+          </section>
+
+          <section class="secao-detalhe">
+            <h3>Classificação</h3>
+            <dl class="lista-definicoes">
+              <div>
+                <dt>Projetos</dt>
+                <dd id="detalhe-projetos"></dd>
+              </div>
+              <div>
+                <dt>Assuntos</dt>
+                <dd id="detalhe-assuntos"></dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="secao-detalhe">
+            <h3>Relações</h3>
+            <div id="detalhe-relacoes"></div>
+          </section>
+
+          <section class="secao-detalhe fonte">
+            <h3>Registro de fonte</h3>
+            <dl id="detalhe-fonte" class="lista-definicoes"></dl>
+          </section>
+        </article>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="rodape-site">
+    <p>Protótipo para amadurecimento estrutural. O design visual final será explorado posteriormente com o Google Stitch.</p>
+  </footer>
+
+  <noscript>
+    <p class="aviso-noscript">Este protótipo usa JavaScript para montar a linha do tempo e aplicar os filtros.</p>
+  </noscript>
+
+  <script src="dados/registros.js"></script>
+  <script src="scripts/aplicacao.js"></script>
+</body>
+</html>

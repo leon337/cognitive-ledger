@@ -1,6 +1,6 @@
 # Missão MCF — Protótipo navegável PT-BR do Cognitive Ledger
 
-**Status:** `PRONTO_PARA_REVISAO_HUMANA / PUBLICACAO_PENDENTE_DE_HABILITACAO`
+**Status:** `PRONTO_PARA_REVISAO_HUMANA / PUBLICACAO_LIVE`
 **Data:** 2026-08-21
 **Objetivo:** transformar a fundação conceitual aprovada em uma estrutura totalmente legível em português do Brasil e em um protótipo web simples, navegável e publicável, preservando o design visual final para o Google Stitch.
 
@@ -63,13 +63,13 @@ Responsável por verificar exposição de conteúdo privado, limites de publica�
 
 Responsável por rastreabilidade dos commits, branch/PR e mecanismo de publicação do protótipo.
 
-**Entrega:** CI mínimo, documentação de publicação e branch `gh-pages` preparada com raiz publicável.
+**Entrega:** CI mínimo, documentação de publicação, branch `gh-pages` preparada e Static Site no Render live.
 
 ### Emily — auditoria independente
 
 Responsável por verificar suficiência das evidências, aderência aos critérios e registrar não conformidades ou limitações antes da conclusão.
 
-**Entrega:** auditoria `APROVADO_COM_PENDENCIAS_DE_INFRAESTRUTURA`, com limitação de independência explicitada.
+**Entrega:** auditoria `APROVADO_PARA_REVISAO_HUMANA / CI_NAO_VERIFICADO`, com limitação de independência explicitada.
 
 ## Fluxo de handoffs realizado
 
@@ -86,9 +86,9 @@ Helena — HTML/CSS/JS e dados demonstrativos
         ↓
 Ricardo — privacidade e separação canônico/publicado
         ↓
-Gabriel — CI, PR e preparação de gh-pages
+Gabriel — CI, PR, gh-pages e publicação Render
         ↓
-Emily — auditoria e pendências
+Emily — auditoria e limitações
         ↓
 MESTRE — consolidação para revisão de LEANDRO
 ```
@@ -105,18 +105,26 @@ MESTRE — consolidação para revisão de LEANDRO
 | busca e filtros sobre dados demonstrativos | ATENDIDO POR INSPEÇÃO | `site/scripts/aplicacao.js` + `site/dados/registros.js` |
 | protótipo como ferramenta de discovery | ATENDIDO | especificação + briefing Stitch |
 | separação entre dado privado e publicado | ATENDIDO COM RESTRIÇÃO | parecer de Ricardo |
-| validação automatizada | PENDENTE DE EVIDÊNCIA | GitHub Actions encerra com failure sem passos/logs disponíveis na integração |
-| URL navegável | PREPARADA / NÃO COMPROVADA LIVE | branch `gh-pages` criada; falta confirmar habilitação do Pages |
+| publicação navegável | ATENDIDO | Static Site Render `live` |
+| validação automatizada | PENDENTE DE EVIDÊNCIA | GitHub Actions encerra com `failure` sem passos/logs disponíveis na integração |
 
-## Pendências abertas
+## Publicação live
 
-### P1 — GitHub Pages
+```text
+https://cognitive-ledger-prototipo.onrender.com
+```
 
-A branch `gh-pages` está preparada para publicação pela raiz. A integração GitHub disponível nesta sessão não expõe a ação de habilitar/configurar GitHub Pages. É necessário confirmar uma única configuração no repositório e então verificar a URL.
+O serviço está vinculado à branch `design/cognitive-ledger-foundation`, com Auto-Deploy habilitado. Alterações futuras no protótipo passam a atualizar a mesma superfície de revisão.
 
-### P2 — CI
+A branch `gh-pages` também está preparada como alternativa para GitHub Pages, mas a configuração de Pages não é requisito para revisar o protótipo agora.
+
+## Pendência aberta
+
+### CI
 
 O workflow de validação existe, mas as execuções consultadas encerram com `failure` sem passos e sem logs recuperáveis. A causa permanece não determinada; nenhuma correção especulativa foi aplicada.
+
+Isso não impede a revisão estrutural humana, mas impede declarar CI verde.
 
 ## Regra de evidência
 

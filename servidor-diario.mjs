@@ -1,6 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { criarServidor } from "./servidor-diario-core.mjs";
+import { criarServidor, verificarApi } from "./servidor-diario-core.mjs";
 
 const raiz = path.dirname(fileURLToPath(import.meta.url));
 const pastaPublica = path.join(raiz, ".gerado", "site-privado");
@@ -11,6 +11,14 @@ const porta = Number(process.env.PORT || 10000);
 
 if (!usuario || !senha || !apiUrl) {
   console.error("COGNITIVE_LEDGER_USUARIO, COGNITIVE_LEDGER_SENHA e COGNITIVE_LEDGER_API_URL são obrigatórios.");
+  process.exit(1);
+}
+
+try {
+  const verificacao = await verificarApi({ usuario, senha, apiUrl });
+  console.log(`API operacional validada: ${verificacao.total} registro(s) disponíveis.`);
+} catch (erro) {
+  console.error(`Falha no smoke test da API: ${erro.message}`);
   process.exit(1);
 }
 

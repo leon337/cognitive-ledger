@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { once } from "node:events";
-import { criarServidor } from "../servidor-diario-core.mjs";
+import { criarServidor, verificarApi } from "../servidor-diario-core.mjs";
 
 const autorizacao = `Basic ${Buffer.from("leandro:senha-teste").toString("base64")}`;
 
@@ -74,4 +74,36 @@ test("continua servindo arquivos privados", async () => {
     assert.equal(resposta.status, 200);
     assert.match(await resposta.text(), /<h1>ok<\/h1>/);
   } finally { app.limpar(); }
+});
+
+test("verifica a API autenticada antes do startup", async () => {
+  let chamada;
+  const resultado = await verificarApi({
+    usuario: "leandro",
+    senha: "senha-teste",
+    apiUrl: "https://api.exemplo/cognitive-ledger-api",
+    fetchImpl: async (url, opcoes) => {
+      chamada = { url: String(url), opcoes };
+      return new Response(JSON.stringify({ registros: [{ id: "a" }, { id: "b" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" }
+      });
+    }
+  });
+
+  assert.equal(resultado.total, 2);
+  assert.equal(chamada.url, "https://api.exemplo/cognitive-ledger-api/timeline");
+  assert.equal(chamada.opcoes.headers.Authorization, autorizacao);
+});
+
+test("verificação de API falha quando upstream não autentica", async () => {
+  await assert.rejects(
+    verificarApi({
+      usuario: "leandro",
+      senha: "senha-teste",
+      apiUrl: "https://api.exemplo/cognitive-ledger-api",
+      fetchImpl: async () => new Response("não autorizado", { status: 401 })
+    }),
+    /API indisponível ou não autorizada: 401/
+  );
 });

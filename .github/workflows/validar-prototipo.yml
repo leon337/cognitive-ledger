@@ -23,7 +23,29 @@ jobs:
           deno-version: v2.x
 
       - name: Validar Edge Function com Deno
-        run: deno check supabase/functions/cognitive-ledger-api/index.ts
+        id: deno_check
+        continue-on-error: true
+        run: |
+          set +e
+          deno check supabase/functions/cognitive-ledger-api/index.ts > deno-check.log 2>&1
+          status=$?
+          cat deno-check.log
+          printf '%s\n' "$status" > deno-check.exit
+          exit "$status"
+
+      - name: Publicar diagnóstico do Deno
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deno-check
+          path: |
+            deno-check.log
+            deno-check.exit
+          if-no-files-found: error
+
+      - name: Falhar se Deno check falhou
+        if: steps.deno_check.outcome == 'failure'
+        run: exit 1
 
       - name: Validar sintaxe JavaScript
         run: |

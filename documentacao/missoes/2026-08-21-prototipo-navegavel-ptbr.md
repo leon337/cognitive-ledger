@@ -1,6 +1,6 @@
 # Missão MCF — Protótipo navegável PT-BR do Cognitive Ledger
 
-**Status:** EM_EXECUCAO
+**Status:** `PRONTO_PARA_REVISAO_HUMANA / PUBLICACAO_PENDENTE_DE_HABILITACAO`
 **Data:** 2026-08-21
 **Objetivo:** transformar a fundação conceitual aprovada em uma estrutura totalmente legível em português do Brasil e em um protótipo web simples, navegável e publicável, preservando o design visual final para o Google Stitch.
 
@@ -33,64 +33,95 @@
 
 Responsável por manter objetivo, escopo, ordem de execução, evidências e passagens de bastão.
 
+**Entrega:** missão, plano, consolidação de estado e handoffs.
+
 ### Leonardo — produto e requisitos
 
 Responsável por preservar a intenção do produto, revisar nomenclatura, requisitos, critérios de aceite e conteúdo necessário no protótipo.
+
+**Entrega:** visão do produto, captura/recuperação e briefing progressivo do Stitch em português.
 
 ### Sofia — arquitetura de software
 
 Responsável pela estrutura de pastas, fronteiras entre documentação, dados, site e fontes, além da arquitetura da informação do protótipo.
 
+**Entrega:** modelo de domínio, especificação, arquitetura da informação e mapa de telas.
+
 ### Helena — engenharia frontend
 
 Responsável por implementar a versão navegável em HTML, CSS e JavaScript simples, sem assumir o design visual final.
+
+**Entrega:** `site/index.html`, CSS estrutural, JavaScript, dados demonstrativos e teste estrutural.
 
 ### Ricardo — segurança e privacidade
 
 Responsável por verificar exposição de conteúdo privado, limites de publicação e separação entre dados de demonstração e fontes pessoais.
 
+**Entrega:** fonte de verdade, convenções de `diario/` e `fontes/` e parecer de privacidade.
+
 ### Gabriel — integração, versionamento e publicação
 
 Responsável por rastreabilidade dos commits, branch/PR e mecanismo de publicação do protótipo.
+
+**Entrega:** CI mínimo, documentação de publicação e branch `gh-pages` preparada com raiz publicável.
 
 ### Emily — auditoria independente
 
 Responsável por verificar suficiência das evidências, aderência aos critérios e registrar não conformidades ou limitações antes da conclusão.
 
-## Fluxo de handoffs
+**Entrega:** auditoria `APROVADO_COM_PENDENCIAS_DE_INFRAESTRUTURA`, com limitação de independência explicitada.
+
+## Fluxo de handoffs realizado
 
 ```text
-LEANDRO (objetivo aprovado)
+LEANDRO — objetivo e boundary aprovados
         ↓
-MESTRE
+MESTRE — missão e plano
         ↓
-Leonardo — requisitos e linguagem
+Leonardo — requisitos, linguagem e produto
         ↓
-Sofia — estrutura e arquitetura da informação
+Sofia — domínio, pastas e arquitetura da informação
         ↓
-Helena — HTML/CSS/JS
+Helena — HTML/CSS/JS e dados demonstrativos
         ↓
-Ricardo — privacidade/publicação
+Ricardo — privacidade e separação canônico/publicado
         ↓
-Gabriel — integração/publicação
+Gabriel — CI, PR e preparação de gh-pages
         ↓
-Emily — auditoria
+Emily — auditoria e pendências
         ↓
-MESTRE — consolidação para LEANDRO
+MESTRE — consolidação para revisão de LEANDRO
 ```
 
-## Critérios de aceite
+## Estado dos critérios de aceite
 
-- nenhum documento principal criado por nós permanece em inglês;
-- a árvore principal do projeto é compreensível em português;
-- o site abre sem dependências externas obrigatórias;
-- a linha do tempo é navegável e apresenta data/hora, título, resumo e tipo;
-- o detalhe do registro distingue registro cognitivo e fonte;
-- busca e filtros funcionam sobre dados de demonstração;
-- o protótipo funciona como ferramenta de discovery, não como design final;
-- dados pessoais brutos não são expostos deliberadamente na publicação;
-- o link navegável e as limitações da publicação são registrados ao final.
+| Critério | Estado | Evidência |
+|---|---|---|
+| documentação principal em português | ATENDIDO | `README.md` + `documentacao/` |
+| árvore principal compreensível em português | ATENDIDO | `documentacao/`, `diario/`, `fontes/`, `site/` |
+| HTML/CSS/JS sem framework obrigatório | ATENDIDO | `site/` |
+| linha do tempo com data/hora, título, resumo e tipo | ATENDIDO POR INSPEÇÃO | `site/index.html` + `site/scripts/aplicacao.js` |
+| detalhe separa registro cognitivo e fonte | ATENDIDO POR INSPEÇÃO | `site/index.html` |
+| busca e filtros sobre dados demonstrativos | ATENDIDO POR INSPEÇÃO | `site/scripts/aplicacao.js` + `site/dados/registros.js` |
+| protótipo como ferramenta de discovery | ATENDIDO | especificação + briefing Stitch |
+| separação entre dado privado e publicado | ATENDIDO COM RESTRIÇÃO | parecer de Ricardo |
+| validação automatizada | PENDENTE DE EVIDÊNCIA | GitHub Actions encerra com failure sem passos/logs disponíveis na integração |
+| URL navegável | PREPARADA / NÃO COMPROVADA LIVE | branch `gh-pages` criada; falta confirmar habilitação do Pages |
+
+## Pendências abertas
+
+### P1 — GitHub Pages
+
+A branch `gh-pages` está preparada para publicação pela raiz. A integração GitHub disponível nesta sessão não expõe a ação de habilitar/configurar GitHub Pages. É necessário confirmar uma única configuração no repositório e então verificar a URL.
+
+### P2 — CI
+
+O workflow de validação existe, mas as execuções consultadas encerram com `failure` sem passos e sem logs recuperáveis. A causa permanece não determinada; nenhuma correção especulativa foi aplicada.
 
 ## Regra de evidência
 
-Cada etapa deve deixar artefato, commit ou parecer verificável. Nenhum agente simulado neste ambiente deve ser apresentado como processo cognitivo independente; a execução segue os contratos do MCF por papéis e handoffs dentro da mesma sessão.
+Cada etapa deixou artefato, commit ou parecer verificável. Nenhum agente representado neste ambiente é apresentado como processo cognitivo independente; a execução aplicou os contratos do MCF por papéis e handoffs dentro da mesma sessão.
+
+## Próximo gate humano
+
+LEANDRO deve abrir o protótipo publicado, revisar a estrutura da experiência e indicar o que deve mudar na hierarquia, navegação ou conteúdo. O design visual final continua reservado ao Google Stitch.

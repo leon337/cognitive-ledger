@@ -28,6 +28,10 @@ function autorizado(req, usuario, senha) {
   }
 }
 
+function criarAutorizacao(usuario, senha) {
+  return `Basic ${Buffer.from(`${usuario}:${senha}`).toString("base64")}`;
+}
+
 function headersPrivados(extra = {}) {
   return {
     "Cache-Control": "no-store, private",
@@ -59,10 +63,10 @@ async function lerCorpo(req, limite = 1024 * 1024) {
   return Buffer.concat(partes);
 }
 
-export async function verificarApi({ usuario, senha, apiUrl, fetchImpl = fetch }) {
-  if (!usuario || !senha || !apiUrl) throw new Error("usuario, senha e apiUrl são obrigatórios");
+export async function verificarApi({ usuario, senhaApi, apiUrl, fetchImpl = fetch }) {
+  if (!usuario || !senhaApi || !apiUrl) throw new Error("usuario, senhaApi e apiUrl são obrigatórios");
   const apiBase = apiUrl.replace(/\/+$/, "");
-  const authorization = `Basic ${Buffer.from(`${usuario}:${senha}`).toString("base64")}`;
+  const authorization = criarAutorizacao(usuario, senhaApi);
   const resposta = await fetchImpl(`${apiBase}/timeline`, {
     method: "GET",
     headers: { Authorization: authorization, Accept: "application/json" }
@@ -73,11 +77,12 @@ export async function verificarApi({ usuario, senha, apiUrl, fetchImpl = fetch }
   return { status: resposta.status, total: dados.registros.length };
 }
 
-export function criarServidor({ pastaPublica, usuario, senha, apiUrl, fetchImpl = fetch }) {
-  if (!pastaPublica || !usuario || !senha || !apiUrl) {
-    throw new Error("pastaPublica, usuario, senha e apiUrl são obrigatórios");
+export function criarServidor({ pastaPublica, usuario, senha, senhaApi, apiUrl, fetchImpl = fetch }) {
+  if (!pastaPublica || !usuario || !senha || !senhaApi || !apiUrl) {
+    throw new Error("pastaPublica, usuario, senha, senhaApi e apiUrl são obrigatórios");
   }
   const apiBase = apiUrl.replace(/\/+$/, "");
+  const authorizationApi = criarAutorizacao(usuario, senhaApi);
 
   return http.createServer(async (req, res) => {
     if (!autorizado(req, usuario, senha)) {
@@ -101,7 +106,7 @@ export function criarServidor({ pastaPublica, usuario, senha, apiUrl, fetchImpl 
         const upstream = await fetchImpl(`${apiBase}/${rotaTimeline ? "timeline" : "registros"}`, {
           method: metodoEsperado,
           headers: {
-            Authorization: req.headers.authorization,
+            Authorization: authorizationApi,
             ...(req.headers["content-type"] ? { "Content-Type": req.headers["content-type"] } : {})
           },
           body: corpo

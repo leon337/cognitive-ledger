@@ -5,6 +5,14 @@
 
 Este documento será amadurecido progressivamente. O produto deve chegar ao Google Stitch com domínio, estrutura, navegação e comportamento já compreendidos.
 
+## Protótipo estrutural atual
+
+```text
+https://cognitive-ledger-prototipo.onrender.com
+```
+
+O link acima é a superfície contínua de discovery estrutural. Ele está vinculado à branch `design/cognitive-ledger-foundation` e recebe novas versões automaticamente quando a estrutura do protótipo muda.
+
 ## O que precisa estar definido antes do briefing final
 
 - visão do produto validada;
@@ -18,9 +26,9 @@ Este documento será amadurecido progressivamente. O produto deve chegar ao Goog
 - dados e exemplos representativos;
 - estados e casos de borda;
 - critérios de sucesso;
-- protótipo navegável publicado.
+- protótipo navegável publicado e revisado pelo usuário.
 
-## Novo princípio de trabalho
+## Princípio de trabalho
 
 O Stitch não receberá apenas uma descrição textual. Ele deve receber também o link para o protótipo estrutural desenvolvido em HTML, CSS e JavaScript simples.
 
@@ -79,4 +87,4 @@ LINK DO PROTÓTIPO PUBLICADO
 RESTRIÇÕES E NÃO NEGOCIÁVEIS
 ```
 
-O link definitivo do protótipo será registrado aqui assim que a publicação estiver materializada e verificada.
+Este documento ainda não é o prompt final do Stitch. Ele continuará sendo refinado a partir do uso real do protótipo e das decisões tomadas durante o discovery.

@@ -43,13 +43,19 @@ Esse protótipo serve como referência concreta de:
 - detalhe dos registros;
 - comportamento estrutural esperado.
 
+## Preferência visual já definida
+
+O protótipo usa **tema escuro como padrão**. Essa escolha deve ser preservada nas explorações futuras do Google Stitch.
+
+O Stitch pode refinar paleta, contraste, hierarquia, tipografia e acabamento, mas não deve transformar silenciosamente a experiência principal em tema claro. Uma eventual alternativa clara pode ser considerada no futuro, desde que o tema escuro continue sendo a experiência padrão aprovada.
+
 ## O que permanece aberto para o Stitch
 
 O Stitch poderá explorar e propor:
 
 - identidade visual;
 - composição visual;
-- cores;
+- paleta dentro do requisito de experiência escura padrão;
 - tipografia;
 - espaçamentos;
 - estilo de cards e controles;
@@ -65,7 +71,8 @@ O Stitch poderá explorar e propor:
 - dados essenciais de cada registro;
 - estados e capacidades aprovados;
 - regras de privacidade;
-- distinção entre dado canônico e projeção da interface.
+- distinção entre dado canônico e projeção da interface;
+- tema escuro como experiência visual padrão.
 
 ## Entrada prevista no briefing final
 

@@ -15,21 +15,34 @@ const tipos = {
   ".ico": "image/x-icon"
 };
 
-function autorizado(req, usuario, senha) {
+function extrairCredenciais(req) {
   const cabecalho = req.headers.authorization || "";
-  if (!cabecalho.startsWith("Basic ")) return false;
+  if (!cabecalho.startsWith("Basic ")) return null;
   try {
     const credenciais = Buffer.from(cabecalho.slice(6), "base64").toString("utf8");
     const separador = credenciais.indexOf(":");
-    if (separador < 0) return false;
-    return credenciais.slice(0, separador) === usuario && credenciais.slice(separador + 1) === senha;
+    if (separador < 0) return null;
+    return {
+      usuario: credenciais.slice(0, separador),
+      valor: credenciais.slice(separador + 1)
+    };
+  } catch {
+    return null;
+  }
+}
+
+function autorizado(req, usuario, validarAcesso) {
+  const credenciais = extrairCredenciais(req);
+  if (!credenciais || credenciais.usuario !== usuario) return false;
+  try {
+    return validarAcesso(credenciais.valor) === true;
   } catch {
     return false;
   }
 }
 
-function criarAutorizacao(usuario, senha) {
-  return `Basic ${Buffer.from(`${usuario}:${senha}`).toString("base64")}`;
+function criarAutorizacao(usuario, valor) {
+  return `Basic ${Buffer.from(`${usuario}:${valor}`).toString("base64")}`;
 }
 
 function headersPrivados(extra = {}) {
@@ -63,10 +76,10 @@ async function lerCorpo(req, limite = 1024 * 1024) {
   return Buffer.concat(partes);
 }
 
-export async function verificarApi({ usuario, senhaApi, apiUrl, fetchImpl = fetch }) {
-  if (!usuario || !senhaApi || !apiUrl) throw new Error("usuario, senhaApi e apiUrl são obrigatórios");
+export async function verificarApi({ usuario, credencialApi, apiUrl, fetchImpl = fetch }) {
+  if (!usuario || !credencialApi || !apiUrl) throw new Error("configuração da API ausente");
   const apiBase = apiUrl.replace(/\/+$/, "");
-  const authorization = criarAutorizacao(usuario, senhaApi);
+  const authorization = criarAutorizacao(usuario, credencialApi);
   const resposta = await fetchImpl(`${apiBase}/timeline`, {
     method: "GET",
     headers: { Authorization: authorization, Accept: "application/json" }
@@ -77,15 +90,15 @@ export async function verificarApi({ usuario, senhaApi, apiUrl, fetchImpl = fetc
   return { status: resposta.status, total: dados.registros.length };
 }
 
-export function criarServidor({ pastaPublica, usuario, senha, senhaApi, apiUrl, fetchImpl = fetch }) {
-  if (!pastaPublica || !usuario || !senha || !senhaApi || !apiUrl) {
-    throw new Error("pastaPublica, usuario, senha, senhaApi e apiUrl são obrigatórios");
+export function criarServidor({ pastaPublica, usuario, validarAcesso, credencialApi, apiUrl, fetchImpl = fetch }) {
+  if (!pastaPublica || !usuario || typeof validarAcesso !== "function" || !credencialApi || !apiUrl) {
+    throw new Error("configuração obrigatória do servidor ausente");
   }
   const apiBase = apiUrl.replace(/\/+$/, "");
-  const authorizationApi = criarAutorizacao(usuario, senhaApi);
+  const authorizationApi = criarAutorizacao(usuario, credencialApi);
 
   return http.createServer(async (req, res) => {
-    if (!autorizado(req, usuario, senha)) {
+    if (!autorizado(req, usuario, validarAcesso)) {
       responderNaoAutorizado(res);
       return;
     }

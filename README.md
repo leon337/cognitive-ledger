@@ -30,6 +30,10 @@ Português do Brasil é o idioma operacional deste repositório.
 - `site/` — protótipo navegável em HTML, CSS e JavaScript simples;
 - `conceitos/` — conceitos em evolução, quando necessários.
 
+## Documentação operacional
+
+- `documentacao/autenticacao-e-recuperacao-de-acesso.md` — descreve o mecanismo atual de autenticação do diário privado, a separação entre acesso humano e credencial interna, o incidente de perda de senha de 2026-08-21, o retrabalho gerado, a pendência de configuração no Render e a necessidade futura de recuperação autônoma de senha.
+
 ## Modelo central
 
 Uma conversa é uma fonte. A unidade durável é o **Evento Cognitivo**.

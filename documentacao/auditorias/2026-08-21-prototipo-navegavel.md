@@ -3,7 +3,7 @@
 **Agente responsável:** Emily — Auditoria Independente
 **Data:** 2026-08-21
 **Boundary:** reorganização PT-BR + protótipo estático HTML/CSS/JS + publicação para revisão
-**Status:** `APROVADO_PARA_REVISAO_HUMANA / CI_NAO_VERIFICADO`
+**Status:** `APROVADO_PARA_REVISAO_HUMANA / CI_FALHA_ANTES_DOS_STEPS`
 
 ## Limitação de independência
 
@@ -38,6 +38,8 @@ Foram materializados:
 
 A inspeção dos arquivos confirma presença de busca, filtros, linha do tempo, detalhe, relações, fonte/proveniência e regras responsivas.
 
+O protótipo também passou a expor uma seção estática de **Bastidores da missão**, mostrando os papéis MCF aplicados ao trabalho e o fluxo de handoffs.
+
 ### 4. Separação de dados privados e publicados
 
 **Resultado:** APROVADO COM RESTRIÇÃO.
@@ -52,11 +54,21 @@ A missão documenta MESTRE, Leonardo, Sofia, Helena, Ricardo, Gabriel e Emily, c
 
 ### 6. Validação automatizada
 
-**Resultado:** NÃO VERIFICADO / PENDÊNCIA DE INFRAESTRUTURA.
+**Resultado:** FALHA DE EXECUÇÃO ANTES DOS STEPS / CAUSA EXATA AINDA NÃO DETERMINADA.
 
-Foi criado o workflow `.github/workflows/validar-prototipo.yml`, mas as execuções observadas no GitHub Actions encerraram com `failure` sem disponibilizar passos ou logs do job pela integração consultada. Houve nova tentativa com o mesmo comportamento.
+O workflow `.github/workflows/validar-prototipo.yml` continua sendo disparado no GitHub Actions. Na execução mais recente observada para o commit `9a51e5dfa0bd8d4be1ffa9be7f5ace8c69b15567`:
 
-Não existe evidência suficiente para afirmar que a falha veio do código do protótipo nem para afirmar que os testes passaram. Pela regra de não inventar causa, o ponto permanece aberto até que haja log/step disponível ou validação equivalente em outro ambiente.
+```text
+run: 32451011497
+job: 96679413019
+conclusion: failure
+steps: []
+logs: BlobNotFound / 404
+```
+
+A evidência melhora a classificação da falha: o job termina sem executar qualquer step observável. Portanto, **não há evidência de que `node --check` ou `validar-estrutura.mjs` tenham sido executados e falhado**. A falha ocorre antes da execução dos steps ou em uma camada da infraestrutura do Actions não exposta pela integração atual.
+
+A causa exata ainda não deve ser inventada. Ela pode depender de configuração/infraestrutura do GitHub Actions, mas isso permanece hipótese até existir evidência adicional.
 
 ### 7. Publicação
 
@@ -70,12 +82,12 @@ URL:
 https://cognitive-ledger-prototipo.onrender.com
 ```
 
-Evidência inicial:
+Deploy mais recente verificado nesta auditoria:
 
 ```text
 service: srv-da3u2tajobas739pb8q0
-deploy: dep-da3u2tqjobas739pb9ug
-commit: ae3d08ae6362a7b894b64cda3c9574c4ed457ed0
+deploy: dep-da3u6fss728c73atbncg
+commit: 9a51e5dfa0bd8d4be1ffa9be7f5ace8c69b15567
 status: live
 ```
 
@@ -89,7 +101,7 @@ Nenhuma não conformidade crítica ou alta foi encontrada nos artefatos por insp
 
 Pendência restante:
 
-- obter evidência executável do teste automatizado ou diagnóstico do GitHub Actions.
+- obter diagnóstico da camada do GitHub Actions que está encerrando o job antes dos steps, ou executar a validação equivalente em outro ambiente com evidência de saída.
 
 ## Veredito
 

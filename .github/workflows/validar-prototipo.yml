@@ -17,6 +17,14 @@ jobs:
       - name: Baixar repositório
         uses: actions/checkout@v4
 
+      - name: Configurar Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Validar Edge Function com Deno
+        run: deno check supabase/functions/cognitive-ledger-api/index.ts
+
       - name: Validar sintaxe JavaScript
         run: |
           node --check site/dados/registros.js

@@ -1,0 +1,26 @@
+name: Validar protótipo estrutural
+
+on:
+  push:
+    branches:
+      - main
+      - design/cognitive-ledger-foundation
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Validar sintaxe JavaScript
+        run: |
+          node --check site/dados/registros.js
+          node --check site/scripts/aplicacao.js
+
+      - name: Validar estrutura do protótipo
+        run: node site/testes/validar-estrutura.mjs

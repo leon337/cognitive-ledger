@@ -153,26 +153,28 @@ Evento cognitivo relacionado:
 
 - `ec-2026-08-21-062700-001` — ideia de produto.
 
-## Pendência de configuração no Render
+## Fechamento da variável residual no Render
 
-Existe uma variável residual chamada:
+Durante o incidente existiu temporariamente uma variável residual chamada:
 
 `COGNITIVE_LEDGER_API_CREDENTIAL`
 
-O código atual não lê essa variável.
+O código não utilizava essa variável. Ela havia surgido durante uma tentativa intermediária de separar credenciais.
 
-Ela surgiu durante uma tentativa intermediária de separar credenciais e ficou no ambiente após a solução final.
+Em 2026-08-21 foi executado o fechamento controlado da pendência:
 
-Remoção segura prevista:
+1. busca no repositório confirmou zero usos de `COGNITIVE_LEDGER_API_CREDENTIAL`;
+2. o proprietário removeu somente essa variável no ambiente do serviço `cognitive-ledger-diario`;
+3. o Render disparou novo deploy;
+4. o deploy `dep-da4337gjo6nc73di4g00` terminou com estado `live`;
+5. o startup registrou `API operacional validada: 13 registro(s) disponíveis.`;
+6. o serviço privado permaneceu disponível após a alteração.
 
-1. confirmar por código e runtime que não há consumo da variável;
-2. removê-la do serviço Render;
-3. executar novo deploy/smoke test;
-4. verificar que a API continua autenticando e que a timeline privada continua acessível.
+A remoção não alterou `COGNITIVE_LEDGER_SENHA`, `COGNITIVE_LEDGER_USUARIO` nem `COGNITIVE_LEDGER_API_URL`.
 
 Evento cognitivo relacionado:
 
-- `ec-2026-08-21-062800-001` — pendência técnica aberta.
+- `ec-2026-08-21-062800-001` — pendência técnica **resolvida**.
 
 ## Arquivos de referência
 
@@ -182,6 +184,7 @@ O comportamento documentado deve ser conferido prioritariamente nos arquivos:
 - `servidor-diario-core.mjs`;
 - `acesso-diario.mjs`;
 - testes em `testes/servidor-diario.test.mjs`;
+- `supabase/functions/cognitive-ledger-api/index.ts` — baseline versionado da Edge Function;
 - Edge Function `cognitive-ledger-api` implantada no projeto Supabase.
 
 Se este documento divergir do código executado, o runtime verificado é a fonte factual e a documentação deve ser atualizada.
@@ -230,5 +233,5 @@ Antes de modificar autenticação em produção:
 - separação entre senha humana e credencial interna: operacional;
 - login real após redefinição: confirmado pelo proprietário;
 - recuperação autônoma de senha: **NÃO IMPLEMENTADA**;
-- variável residual no Render: **PENDENTE DE LIMPEZA**;
+- variável residual no Render: **REMOVIDA / VERIFICADA SEM REGRESSÃO**;
 - autenticação definitiva por cliente da Fase 1: **NÃO IMPLEMENTADA**.

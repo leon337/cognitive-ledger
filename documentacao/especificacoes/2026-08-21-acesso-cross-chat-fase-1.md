@@ -1,6 +1,6 @@
 # Acesso Cross-Chat ao Cognitive Ledger — Fase 1
 
-**Status:** DESIGN APROVADO / ESPECIFICAÇÃO EM REVISÃO
+**Status:** DESIGN APROVADO / PRONTO PARA REVISÃO DO USUÁRIO
 **Data:** 2026-08-21
 
 ## Objetivo
@@ -46,7 +46,7 @@ O Supabase permanece como fonte de verdade operacional. Clientes externos não r
 - autorização por cliente;
 - auditoria de todas as consultas;
 - acesso ao Registro Cognitivo por padrão;
-- acesso excepcional à fonte bruta quando houver justificativa operacional;
+- acesso excepcional à fonte bruta quando houver justificativa operacional e capacidade específica;
 - sinalização de ausência de evidência, ambiguidade e conflito;
 - arquitetura preparada para Codex e outras IAs no futuro.
 
@@ -180,11 +180,14 @@ Conteúdo bruto de conversas ou outras fontes não deve ser incluído automatica
 
 A fonte bruta só pode ser acessada quando houver necessidade operacional clara, como verificar a formulação original de uma decisão ou resolver uma divergência de interpretação.
 
-Quando a fonte bruta for acessada:
+O acesso à fonte bruta exige a capacidade separada `ler_fonte_bruta`. Essa capacidade não é acionada implicitamente por `ler_diario`, `buscar_eventos` ou `recuperar_contexto`.
 
-- a justificativa deve ser explícita;
-- a consulta deve aparecer no histórico da missão;
-- a auditoria deve registrar que houve acesso à fonte bruta.
+Para o cliente ChatGPT/MCF, `ler_fonte_bruta` pode ser concedida de forma restrita pelo proprietário, mas cada uso exige:
+
+- justificativa operacional explícita;
+- indicação visível no histórico da missão;
+- auditoria específica do acesso;
+- retorno somente da fonte necessária para resolver a questão atual.
 
 ## Confiabilidade epistemológica
 
@@ -237,7 +240,7 @@ Cada cliente deve ter:
 - conjunto explícito de capacidades;
 - possibilidade de revogação independente.
 
-Permissões da Fase 1 para ChatGPT/MCF:
+Permissões normais da Fase 1 para ChatGPT/MCF:
 
 ```text
 ✓ ler_diario
@@ -247,6 +250,8 @@ Permissões da Fase 1 para ChatGPT/MCF:
 ✗ administração
 ✗ acesso SQL
 ```
+
+A capacidade `ler_fonte_bruta` é separada das permissões normais de recuperação e só pode existir quando explicitamente concedida pelo proprietário.
 
 Nenhum cliente recebe credenciais administrativas do Supabase.
 
@@ -275,6 +280,8 @@ A auditoria deve permitir responder, posteriormente:
 - quais registros foram recuperados;
 - se a fonte bruta foi acessada;
 - se a operação terminou com sucesso ou falha.
+
+A auditoria é parte obrigatória do boundary de leitura. Se a entrada de auditoria da operação não puder ser persistida, o sistema deve falhar fechado: a consulta não é entregue ao cliente e retorna erro operacional sem conteúdo privado.
 
 ## Governança do MCF
 
@@ -314,7 +321,7 @@ Casos mínimos:
 - conflito entre eventos → retornar conflito de contexto;
 - falha no mecanismo semântico → permitir fallback controlado para filtros/texto quando seguro, sinalizando degradação;
 - indisponibilidade do armazenamento → retornar erro sem inventar memória;
-- falha de auditoria → a política de implementação deve definir se a leitura é bloqueada ou registrada em mecanismo seguro alternativo; isso será resolvido no plano técnico antes da implementação.
+- falha de auditoria → bloquear a leitura e não retornar conteúdo privado.
 
 ## Compatibilidade futura
 
@@ -375,7 +382,9 @@ Antes da validação da Fase 1 deve haver evidência de que:
 - revogar um cliente não quebra os demais;
 - operações de escrita cross-chat são rejeitadas;
 - fonte bruta não é retornada por padrão;
+- `ler_fonte_bruta` exige capacidade separada, justificativa e auditoria;
 - auditoria não copia conversas integrais automaticamente;
+- falha de auditoria bloqueia a entrega do conteúdo;
 - o protótipo público continua sem acesso aos dados reais;
 - falhas de autorização não revelam conteúdo privado.
 

@@ -1,6 +1,6 @@
 # Captura e Recuperação — Cognitive Ledger
 
-**Status:** `RASCUNHO / EM_ESTUDO`
+**Status:** `MVP_OPERACIONAL / EM_VALIDACAO`
 **Data:** 2026-08-21
 
 ## Princípio de captura
@@ -36,6 +36,8 @@ Persistir Registro Cognitivo + Registro de Fonte
 Expor na linha do tempo e no índice de recuperação
 ```
 
+No MVP operacional, a persistência primária ocorre no Supabase/Postgres. O Git não faz parte do caminho crítico de gravação; ele funciona como exportação, backup e representação portátil posterior.
+
 ## Extração cognitiva
 
 Quando presentes, a extração deve distinguir:
@@ -61,6 +63,8 @@ O sistema deve suportar simultaneamente:
 2. fonte original ou referência estável para ela.
 
 Quando a fonte bruta não puder ou não deva ser copiada, o ledger ainda deve preservar metadados de proveniência e referência externa, quando disponível.
+
+Reconstruções históricas devem ser identificadas explicitamente como reconstruções e não podem ser apresentadas como transcrições literais quando a fonte bruta não estiver preservada.
 
 ## Intenção de recuperação
 
@@ -114,6 +118,16 @@ O assistente pode identificar uma ideia, decisão ou descoberta significativa e 
 
 Captura automática exige política explícita do usuário, filtragem forte e controles claros de privacidade. Não faz parte do boundary inicial do MVP.
 
-## Relação com o protótipo
+## Relação com as superfícies publicadas
 
-O protótipo navegável atual não implementa captura real ainda. Ele deve representar estruturalmente os resultados esperados da captura para que possamos amadurecer o que um registro precisa mostrar e como uma recuperação deve ser apresentada.
+Existem duas superfícies com responsabilidades diferentes:
+
+### Protótipo público
+
+O site público continua usando apenas dados demonstrativos. Ele serve para amadurecer estrutura, navegação e conteúdo e não deve acessar o armazenamento real do diário.
+
+### Diário privado
+
+A superfície privada carrega sua timeline em runtime a partir do armazenamento operacional do Cognitive Ledger, por uma API protegida. Os dados reais não ficam embutidos no bundle estático.
+
+O pipeline técnico de gravação e leitura pelo banco já foi implementado e validado por testes de persistência consecutiva. A missão ainda exige um teste final do comportamento de produto completo: receber um comando natural explícito de registro, persistir o evento e confirmar visualmente que ele apareceu na timeline privada antes de considerar o MVP concluído.

@@ -32,7 +32,7 @@ Português do Brasil é o idioma operacional deste repositório.
 
 ## Documentação operacional
 
-- `documentacao/autenticacao-e-recuperacao-de-acesso.md` — descreve o mecanismo atual de autenticação do diário privado, a separação entre acesso humano e credencial interna, o incidente de perda de senha de 2026-08-21, o retrabalho gerado, a pendência de configuração no Render e a necessidade futura de recuperação autônoma de senha.
+- `documentacao/autenticacao-e-recuperacao-de-acesso.md` — descreve o mecanismo atual de autenticação do diário privado, a separação entre acesso humano e credencial interna, o incidente de perda de senha de 2026-08-21, o retrabalho gerado, o fechamento da variável residual no Render e a necessidade futura de recuperação autônoma de senha.
 - `documentacao/recomendacoes/2026-08-21-mcp-e-cloud-infrastructure.md` — registra a recomendação de manter a Fase 1 do MCP independente da VPS enquanto `cloud-infrastructure` amadurece seus mecanismos de plataforma; qualquer hospedagem futura na VPS exige reavaliação e novo gate humano.
 - `documentacao/decisoes/2026-08-21-visibilidade-temporaria-repositorio.md` — registra que o repositório foi tornado público temporariamente para destravar o CI, sem alterar a privacidade do diário, dos secrets ou dos dados operacionais.
 

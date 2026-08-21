@@ -6,7 +6,9 @@ import path from "node:path";
 import { once } from "node:events";
 import { criarServidor, verificarApi } from "../servidor-diario-core.mjs";
 
-const autorizacao = `Basic ${Buffer.from("leandro:senha-teste").toString("base64")}`;
+const basic = (usuario, valor) => `Basic ${Buffer.from(`${usuario}:${valor}`).toString("base64")}`;
+const autorizacaoSite = basic("leandro", "site");
+const autorizacaoApi = basic("leandro", "api");
 
 async function iniciar(opcoes = {}) {
   const pasta = fs.mkdtempSync(path.join(os.tmpdir(), "cognitive-ledger-"));
@@ -14,7 +16,8 @@ async function iniciar(opcoes = {}) {
   const servidor = criarServidor({
     pastaPublica: pasta,
     usuario: "leandro",
-    senha: "senha-teste",
+    validarAcesso: valor => valor === "site",
+    credencialApi: "api",
     apiUrl: "https://api.exemplo/cognitive-ledger-api",
     ...opcoes
   });
@@ -39,7 +42,7 @@ test("nega API sem autenticação", async () => {
   } finally { app.limpar(); }
 });
 
-test("encaminha timeline preservando Authorization", async () => {
+test("encaminha timeline com credencial interna separada", async () => {
   let chamada;
   const app = await iniciar({
     fetchImpl: async (url, opcoes) => {
@@ -51,17 +54,18 @@ test("encaminha timeline preservando Authorization", async () => {
     }
   });
   try {
-    const resposta = await fetch(`${app.base}/api/timeline`, { headers: { Authorization: autorizacao } });
+    const resposta = await fetch(`${app.base}/api/timeline`, { headers: { Authorization: autorizacaoSite } });
     assert.equal(resposta.status, 200);
     assert.equal(chamada.url, "https://api.exemplo/cognitive-ledger-api/timeline");
-    assert.equal(chamada.opcoes.headers.Authorization, autorizacao);
+    assert.equal(chamada.opcoes.headers.Authorization, autorizacaoApi);
+    assert.notEqual(chamada.opcoes.headers.Authorization, autorizacaoSite);
   } finally { app.limpar(); }
 });
 
 test("não vaza erro do upstream", async () => {
-  const app = await iniciar({ fetchImpl: async () => { throw new Error("segredo-upstream"); } });
+  const app = await iniciar({ fetchImpl: async () => { throw new Error("upstream"); } });
   try {
-    const resposta = await fetch(`${app.base}/api/timeline`, { headers: { Authorization: autorizacao } });
+    const resposta = await fetch(`${app.base}/api/timeline`, { headers: { Authorization: autorizacaoSite } });
     assert.equal(resposta.status, 502);
     assert.equal(await resposta.text(), "Falha temporária ao acessar o diário.");
   } finally { app.limpar(); }
@@ -70,17 +74,17 @@ test("não vaza erro do upstream", async () => {
 test("continua servindo arquivos privados", async () => {
   const app = await iniciar({ fetchImpl: fetch });
   try {
-    const resposta = await fetch(`${app.base}/`, { headers: { Authorization: autorizacao } });
+    const resposta = await fetch(`${app.base}/`, { headers: { Authorization: autorizacaoSite } });
     assert.equal(resposta.status, 200);
     assert.match(await resposta.text(), /<h1>ok<\/h1>/);
   } finally { app.limpar(); }
 });
 
-test("verifica a API autenticada antes do startup", async () => {
+test("verifica a API com credencial interna", async () => {
   let chamada;
   const resultado = await verificarApi({
     usuario: "leandro",
-    senha: "senha-teste",
+    credencialApi: "api",
     apiUrl: "https://api.exemplo/cognitive-ledger-api",
     fetchImpl: async (url, opcoes) => {
       chamada = { url: String(url), opcoes };
@@ -93,14 +97,14 @@ test("verifica a API autenticada antes do startup", async () => {
 
   assert.equal(resultado.total, 2);
   assert.equal(chamada.url, "https://api.exemplo/cognitive-ledger-api/timeline");
-  assert.equal(chamada.opcoes.headers.Authorization, autorizacao);
+  assert.equal(chamada.opcoes.headers.Authorization, autorizacaoApi);
 });
 
 test("verificação de API falha quando upstream não autentica", async () => {
   await assert.rejects(
     verificarApi({
       usuario: "leandro",
-      senha: "senha-teste",
+      credencialApi: "api",
       apiUrl: "https://api.exemplo/cognitive-ledger-api",
       fetchImpl: async () => new Response("não autorizado", { status: 401 })
     }),

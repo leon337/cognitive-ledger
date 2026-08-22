@@ -2,7 +2,7 @@
 
 > **START HERE — porta de entrada canônica para humanos e IAs**
 
-**Estado atual:** `FASE 1 — CONTINUIDADE CROSS-CHAT / AGUARDANDO CONFIRMAÇÃO HUMANA DA IDENTIDADE`  
+**Estado atual:** `FASE 1 — CONTINUIDADE CROSS-CHAT / TAREFA 3 OAUTH EM EXECUÇÃO`  
 **Branch operacional ativa:** [`design/cognitive-ledger-foundation`](https://github.com/leon337/cognitive-ledger/tree/design/cognitive-ledger-foundation)  
 **Natureza da `main`:** entrypoint de continuidade e navegação; a implementação ativa ainda não foi mergeada integralmente aqui.
 
@@ -73,7 +73,7 @@ A Fase 1 MCP é deliberadamente **somente leitura**.
 | Plano de implementação cross-chat | ✅ Aprovado |
 | Tarefa 1 — baseline da API | ✅ Concluída / Deno check exit 0 |
 | Tarefa 2 — clientes, auditoria e vetores | ✅ Concluída / validada |
-| Tarefa 3 — OAuth | 🟡 Em execução / identidade Auth criada / confirmação humana pendente |
+| Tarefa 3 — OAuth | 🟡 Em execução / identidade confirmada / OAuth Server pendente |
 | Assinatura/JWKS | ✅ ES256 / P-256 validado |
 | OAuth Server | ❗ Desabilitado / `feature_disabled` |
 | Tarefa 4 — autorização por cliente | ⬜ Não iniciada |
@@ -102,7 +102,8 @@ G3 — escolha da identidade
 POST /auth/v1/otp
 → HTTP 200
 → identidade criada no Supabase Auth
-→ confirmação humana ainda pendente
+→ confirmação humana concluída
+→ login registrado
 
 JWKS
 → HTTP 200 / ES256 P-256
@@ -113,7 +114,7 @@ OAuth Server
 
 ### Próxima ação
 
-> O proprietário precisa abrir o Magic Link enviado pelo Supabase Auth e concluir a confirmação/login da identidade escolhida.
+> Alinhar Site URL/Redirect URL com o domínio privado e habilitar o OAuth Server com Authorization Path `/oauth/consent`.
 
 ---
 
@@ -127,7 +128,7 @@ OAuth Server
 ✅ Plano de implementação
 ✅ Tarefa 1 — baseline / Deno check
 ✅ Tarefa 2 — clientes, auditoria e vetores
-◆ Tarefa 3 — OAuth 2.1 / confirmar identidade do proprietário
+◆ Tarefa 3 — OAuth 2.1 / configurar OAuth Server
 ⬜ Tarefa 4 — autorização Bearer por cliente
 ⬜ Tarefa 5 — embeddings
 ⬜ Tarefa 6 — recuperação cross-chat
@@ -149,19 +150,19 @@ Legenda:
 ◆ gate humano
 ```
 
-### ◆ GATE HUMANO — Confirmar controle da identidade
+### ◆ GATE HUMANO — Configuração do OAuth Server no Supabase Dashboard
 
 **Ação necessária**  
-Abrir o Magic Link enviado pelo Supabase Auth e concluir a confirmação/login.
+Alinhar Site URL/Redirect URL com o domínio privado e habilitar OAuth 2.1 Server com Authorization Path `/oauth/consent`.
 
 **Por que precisa de você**  
-A prova de controle da caixa de e-mail pertence ao proprietário. A equipe não pode consumir esse link em seu lugar.
+A interface administrativa disponível nesta execução não expõe essa alteração do projeto hospedado.
 
 **Impacto**  
-A identidade já existe no Supabase Auth, mas não será considerada validada para OAuth até a confirmação humana.
+OAuth permanece `feature_disabled` e o fluxo authorization code + PKCE não pode ser validado end-to-end enquanto essa configuração não for aplicada.
 
 **Privacidade**  
-O endereço escolhido não é publicado nem versionado neste repositório.
+O valor da identidade escolhida continua fora do Git público.
 
 ---
 
@@ -194,8 +195,8 @@ O endereço escolhido não é publicado nem versionado neste repositório.
 - Tarefa 1 fechada com `deno check` exit 0 em checkout temporário autorizado.
 - Tarefa 2 concluída: clientes, auditoria, `vector(1024)`, HNSW e RPC híbrida validados.
 - Gate Humano G3 resolvido: identidade do proprietário escolhida; o valor permanece privado e fora do Git.
-- Identidade criada via endpoint suportado do Supabase Auth; confirmação humana ainda pendente.
-- JWKS ES256/P-256 confirmado; OAuth Server identificado como desabilitado.
+- Identidade criada via endpoint suportado do Supabase Auth; confirmação humana concluída e login registrado.
+- Login/consentimento integrados ao diário privado e deployados; JWKS ES256/P-256 confirmado; OAuth Server identificado como desabilitado.
 
 ---
 
@@ -335,13 +336,16 @@ TAREFA ATUAL:
 Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-AGUARDANDO CONFIRMAÇÃO HUMANA DA IDENTIDADE
+EM EXECUÇÃO — PREPARAÇÃO DO OAUTH SERVER
+
+IDENTIDADE DO PROPRIETÁRIO:
+✅ confirmada / login registrado
 
 PRÓXIMA AÇÃO:
-abrir o Magic Link enviado pelo Supabase Auth
+alinhar Site URL / Redirect URL e habilitar OAuth Server + Authorization Path `/oauth/consent`
 
 DEPOIS:
-continuar Tarefa 3; OAuth Server está desabilitado e precisará ser habilitado/configurado
+validar discovery, registro dinâmico e authorization code + PKCE
 
 FONTE OPERACIONAL DO DIÁRIO:
 Supabase/Postgres

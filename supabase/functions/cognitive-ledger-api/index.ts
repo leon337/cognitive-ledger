@@ -5,6 +5,12 @@ import {
   tipoBoundary,
 } from "./lib/autorizacao.ts";
 import type { ClaimsOAuth, ClienteAutorizado } from "./lib/contratos.ts";
+import {
+  agendarIndexacaoSemBloquear,
+  gerarEmbedding,
+  indexarEvento,
+  MODELO_EMBEDDING,
+} from "./lib/embeddings.ts";
 
 function adminClient() {
   const url = Deno.env.get("SUPABASE_URL");
@@ -251,6 +257,79 @@ async function obterTimeline(supabase: ReturnType<typeof adminClient>) {
   };
 }
 
+function dependenciasIndexacao(supabase: ReturnType<typeof adminClient>) {
+  return {
+    obterEvento: async (id: string) => {
+      const { data, error } = await supabase
+        .from("eventos_cognitivos")
+        .select(
+          "id,titulo,resumo,contexto,assuntos,projetos,ideias,decisoes,hipoteses,questoes_abertas,proximos_passos",
+        )
+        .eq("id", id)
+        .single();
+      if (error || !data) throw error || new Error("evento_nao_encontrado");
+      return data as Record<string, unknown>;
+    },
+    gerar: (texto: string) => gerarEmbedding(texto),
+    salvarEmbedding: async (id: string, dados: {
+      embedding: number[];
+      embeddingModel: string;
+      embeddingAtualizadoEm: string;
+    }) => {
+      const { error } = await supabase
+        .from("eventos_cognitivos")
+        .update({
+          embedding: dados.embedding,
+          embedding_model: dados.embeddingModel,
+          embedding_atualizado_em: dados.embeddingAtualizadoEm,
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+  };
+}
+
+function waitUntilRuntime(promessa: Promise<unknown>) {
+  const runtime = (globalThis as any).EdgeRuntime;
+  if (runtime && typeof runtime.waitUntil === "function") {
+    runtime.waitUntil(promessa);
+  } else void promessa;
+}
+
+async function reindexarPendentes(
+  supabase: ReturnType<typeof adminClient>,
+  limite = 10,
+) {
+  const seguro = Math.max(
+    1,
+    Math.min(Number.isFinite(limite) ? Math.trunc(limite) : 10, 25),
+  );
+  const { data, error } = await supabase
+    .from("eventos_cognitivos")
+    .select("id,embedding,embedding_model")
+    .order("timestamp", { ascending: true });
+  if (error) throw error;
+  const pendentes = (data || []).filter((evento: any) =>
+    !evento.embedding || evento.embedding_model !== MODELO_EMBEDDING
+  );
+  const lote = pendentes.slice(0, seguro);
+  let processados = 0;
+  let falhas = 0;
+  for (const evento of lote) {
+    try {
+      await indexarEvento(evento.id, dependenciasIndexacao(supabase));
+      processados += 1;
+    } catch {
+      falhas += 1;
+    }
+  }
+  return {
+    processados,
+    falhas,
+    restantes_estimados: Math.max(0, pendentes.length - processados),
+  };
+}
+
 function validarEvento(evento: any) {
   const obrigatorios = ["id", "timestamp", "tipo", "titulo", "resumo"];
   return evento &&
@@ -291,6 +370,21 @@ Deno.serve(async (req: Request) => {
 
   if (!(await autorizado(req, supabase))) return naoAutorizado();
 
+  if (req.method === "POST" && pathname.endsWith("/admin/reindexar")) {
+    let limite = 10;
+    try {
+      const corpo = await req.json();
+      if (typeof corpo?.limite === "number") limite = corpo.limite;
+    } catch {
+      // corpo opcional
+    }
+    try {
+      return json(await reindexarPendentes(supabase, limite));
+    } catch {
+      return json({ erro: "falha_ao_reindexar" }, 500);
+    }
+  }
+
   if (req.method === "GET" && pathname.endsWith("/timeline")) {
     try {
       return json(await obterTimeline(supabase));
@@ -324,10 +418,13 @@ Deno.serve(async (req: Request) => {
       return json({ erro: "falha_ao_registrar" }, 500);
     }
 
-    return json(
-      { status: data, id: corpo.evento.id },
-      data === "criado" ? 201 : 200,
+    const resposta = { status: data, id: corpo.evento.id };
+    agendarIndexacaoSemBloquear(
+      resposta,
+      () => indexarEvento(corpo.evento.id, dependenciasIndexacao(supabase)),
+      waitUntilRuntime,
     );
+    return json(resposta, data === "criado" ? 201 : 200);
   }
 
   return json({ erro: "rota_nao_encontrada" }, 404);

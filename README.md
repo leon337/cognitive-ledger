@@ -109,7 +109,7 @@ OAuth permanece `feature_disabled` e o fluxo authorization code + PKCE não pode
 
 ### Tarefa 2
 
-- migration: [`supabase/migrations/20260821_cross_chat_fase1.sql`](supabase/migrations/20260821_cross-chat-fase1.sql)
+- migration: [`supabase/migrations/20260821_cross_chat_fase1.sql`](supabase/migrations/20260821_cross_chat_fase1.sql)
 - auditoria: [`documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md`](documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md)
 - `vector(1024)` + HNSW + RPC híbrida + RLS + permissions boundary: `VALIDADOS`
 

@@ -1,7 +1,7 @@
 # Falha de Bootstrap da `main` e Correção do Critério de Continuidade
 
 **Data:** 2026-08-22  
-**Status:** `ACHADO CONFIRMADO / CORREÇÃO AUTORIZADA`  
+**Status:** `ACHADO CONFIRMADO / CORREÇÃO EXECUTADA / BOOTSTRAP TEST PASS`  
 **Evento Cognitivo:** `ec-2026-08-22-022500-001`
 
 ## 1. Contexto
@@ -146,6 +146,59 @@ continuidade operacionalmente utilizável
 
 O princípio deverá ser considerado futuramente também no MCF e em outros projetos.
 
-## 9. Próximo passo
+## 9. Correção executada
 
-Atualizar a `main`, executar o Bootstrap Test e registrar evidência da correção.
+Foram realizadas as seguintes alterações:
+
+1. criação deste registro histórico na branch operacional;
+2. substituição do README da `main` por uma porta de entrada canônica de continuidade;
+3. inclusão na `main` de fase, tarefa atual, item não verificado, próximo passo, roadmap visual, timeline, source of truth, decisões adiadas e instruções para humano/IA;
+4. alinhamento do README da branch `design/cognitive-ledger-foundation` ao checkpoint cross-chat real;
+5. remoção de informação volátil sobre quantidade exata de commits do README da `main`;
+6. correção da instrução de bootstrap para não classificar o novo README como antigo.
+
+### Commits de evidência
+
+- documento inicial do achado: `607dc2ffe5023164076bc3a69712a2a888b724c5`;
+- transformação da `main` em entrypoint: `d0b658f2b85c4457d654939423574dfaedc6784b`;
+- alinhamento do README operacional: `c4ac0ca9180cf62de4b51375529e9e8d1d98b89c`;
+- correção de estado volátil e bootstrap da `main`: `278db8a6090de604bca7ed29d61753cc6bdd518a`.
+
+## 10. Bootstrap Test — resultado
+
+O teste foi reexecutado partindo somente do README atual da `main`.
+
+Foi possível localizar diretamente:
+
+```text
+✓ estado atual
+✓ branch operacional
+✓ objetivo da fase
+✓ tarefa atual
+✓ item não verificado
+✓ próximo passo
+✓ roadmap visual
+✓ timeline resumida
+✓ source of truth
+✓ decisões adiadas
+✓ instruções para humano
+✓ instruções para IA
+✓ documentos canônicos
+```
+
+Os links canônicos para roadmap, princípio e esta auditoria foram abertos com sucesso na branch operacional.
+
+**Resultado:** `PASS`.
+
+## 11. Estado final desta correção
+
+```text
+REGISTRO DO APRENDIZADO: VERIFICADO
+MAIN COMO ENTRYPOINT: CORRIGIDA
+README OPERACIONAL: ALINHADO
+BOOTSTRAP TEST: PASS
+MERGE INTEGRAL DA BRANCH: NÃO EXECUTADO
+PRIORIDADE CROSS-CHAT: PRESERVADA
+```
+
+A correção resolve a falha de discoverability identificada nesta missão sem declarar como resolvidas outras dívidas arquiteturais ou de segurança já documentadas.

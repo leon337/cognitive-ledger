@@ -2,7 +2,7 @@
 
 > **START HERE — porta de entrada canônica para humanos e IAs**
 
-**Estado atual:** `FASE 1 — CONTINUIDADE CROSS-CHAT / TAREFA 3 EM EXECUÇÃO`  
+**Estado atual:** `FASE 1 — CONTINUIDADE CROSS-CHAT / AGUARDANDO CONFIRMAÇÃO HUMANA DA IDENTIDADE`  
 **Branch operacional ativa:** [`design/cognitive-ledger-foundation`](https://github.com/leon337/cognitive-ledger/tree/design/cognitive-ledger-foundation)  
 **Natureza da `main`:** entrypoint de continuidade e navegação; a implementação ativa ainda não foi mergeada integralmente aqui.
 
@@ -26,6 +26,7 @@ Na branch operacional já existem, entre outros componentes:
 - autenticação humana separada da credencial interna Render → API;
 - especificação e plano aprovados para acesso cross-chat;
 - schema cross-chat com clientes, auditoria e vetores;
+- preparação OAuth 2.1 com configuração, consentimento e testes;
 - auditorias, decisões, recomendações, roadmap, checklist vivo e runbooks operacionais;
 - documentação do princípio de continuidade e consciência situacional para humanos e IAs.
 
@@ -72,7 +73,9 @@ A Fase 1 MCP é deliberadamente **somente leitura**.
 | Plano de implementação cross-chat | ✅ Aprovado |
 | Tarefa 1 — baseline da API | ✅ Concluída / Deno check exit 0 |
 | Tarefa 2 — clientes, auditoria e vetores | ✅ Concluída / validada |
-| Tarefa 3 — OAuth | 🟡 Em execução / G3 resolvido / identidade Auth pendente |
+| Tarefa 3 — OAuth | 🟡 Em execução / identidade Auth criada / confirmação humana pendente |
+| Assinatura/JWKS | ✅ ES256 / P-256 validado |
+| OAuth Server | ❗ Desabilitado / `feature_disabled` |
 | Tarefa 4 — autorização por cliente | ⬜ Não iniciada |
 | Tarefa 5 — embeddings | ⬜ Não iniciada |
 | Tarefa 6 — API de recuperação | ⬜ Não iniciada |
@@ -93,15 +96,24 @@ schema + RLS + vector(1024) + HNSW + RPC híbrida
 → VALIDADO
 
 Tarefa 3:
-G3 — identidade do proprietário
+G3 — escolha da identidade
 → DECISÃO RECEBIDA
-→ valor privado e não versionado
-→ identidade ainda não criada/confirmada no Supabase Auth
+
+POST /auth/v1/otp
+→ HTTP 200
+→ identidade criada no Supabase Auth
+→ confirmação humana ainda pendente
+
+JWKS
+→ HTTP 200 / ES256 P-256
+
+OAuth Server
+→ HTTP 404 / feature_disabled
 ```
 
 ### Próxima ação
 
-> Criar/confirmar a identidade escolhida pelo mecanismo suportado do Supabase Auth e continuar a preparação do OAuth 2.1, sem inserir usuário diretamente em `auth.users`.
+> O proprietário precisa abrir o Magic Link enviado pelo Supabase Auth e concluir a confirmação/login da identidade escolhida.
 
 ---
 
@@ -115,7 +127,7 @@ G3 — identidade do proprietário
 ✅ Plano de implementação
 ✅ Tarefa 1 — baseline / Deno check
 ✅ Tarefa 2 — clientes, auditoria e vetores
-🟡 Tarefa 3 — OAuth 2.1 / G3 resolvido / identidade Auth pendente
+◆ Tarefa 3 — OAuth 2.1 / confirmar identidade do proprietário
 ⬜ Tarefa 4 — autorização Bearer por cliente
 ⬜ Tarefa 5 — embeddings
 ⬜ Tarefa 6 — recuperação cross-chat
@@ -137,13 +149,16 @@ Legenda:
 ◆ gate humano
 ```
 
-### ✅ GATE HUMANO G3 — Identidade do proprietário
+### ◆ GATE HUMANO — Confirmar controle da identidade
 
-**Decisão necessária**  
-Resolvida pelo proprietário.
+**Ação necessária**  
+Abrir o Magic Link enviado pelo Supabase Auth e concluir a confirmação/login.
 
-**Estado operacional**  
-A identidade escolhida ainda precisa ser criada/confirmada no Supabase Auth por mecanismo suportado de autenticação.
+**Por que precisa de você**  
+A prova de controle da caixa de e-mail pertence ao proprietário. A equipe não pode consumir esse link em seu lugar.
+
+**Impacto**  
+A identidade já existe no Supabase Auth, mas não será considerada validada para OAuth até a confirmação humana.
 
 **Privacidade**  
 O endereço escolhido não é publicado nem versionado neste repositório.
@@ -179,6 +194,8 @@ O endereço escolhido não é publicado nem versionado neste repositório.
 - Tarefa 1 fechada com `deno check` exit 0 em checkout temporário autorizado.
 - Tarefa 2 concluída: clientes, auditoria, `vector(1024)`, HNSW e RPC híbrida validados.
 - Gate Humano G3 resolvido: identidade do proprietário escolhida; o valor permanece privado e fora do Git.
+- Identidade criada via endpoint suportado do Supabase Auth; confirmação humana ainda pendente.
+- JWKS ES256/P-256 confirmado; OAuth Server identificado como desabilitado.
 
 ---
 
@@ -200,10 +217,11 @@ Contém história, Tarefas 1–9, runbooks, gates e arquitetura detalhada.
 
 [Padrão de Continuidade e Consciência Situacional de Projetos](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md)
 
-### 4. Auditorias das Tarefas 1 e 2
+### 4. Auditorias
 
 - [Tarefa 1 — Baseline Cross-Chat](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/auditorias/2026-08-21-tarefa-1-baseline-cross-chat.md)
 - [Tarefa 2 — Schema Cross-Chat](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md)
+- [Tarefa 3 — OAuth — checkpoint parcial](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/auditorias/2026-08-22-tarefa-3-oauth-parcial.md)
 
 ### 5. Especificação e plano
 
@@ -238,7 +256,7 @@ Quando um chat disser que “leu o diário”, deve existir um mecanismo real de
 2. Abra o [Checklist Vivo](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/roadmaps/checklist-execucao-cross-chat.md).
 3. Abra a branch [`design/cognitive-ledger-foundation`](https://github.com/leon337/cognitive-ledger/tree/design/cognitive-ledger-foundation).
 4. Leia o roadmap detalhado quando precisar do contexto completo.
-5. Se houver `◆ GATE HUMANO`, leia decisão necessária, motivo e impacto antes de responder.
+5. Se houver `◆ GATE HUMANO`, leia ação/decisão necessária, motivo e impacto antes de responder.
 6. Não reabra frentes adiadas sem novo gate humano.
 
 ---
@@ -255,7 +273,7 @@ Se você é uma IA ou agente recebendo apenas este repositório como contexto:
 6. Se **não** possuir acesso operacional ao Ledger, declare `NÃO DISPONÍVEL / NÃO VERIFICADO` e não finja ter consultado o diário.
 7. Preserve a distinção entre **memória recuperada** e **análise nova**.
 8. Não transforme ausência de evidência em conclusão.
-9. Nunca apresente um gate somente pelo código; inclua nome humano, decisão necessária, motivo e impacto.
+9. Nunca apresente um gate somente pelo código; inclua nome humano, ação/decisão necessária, motivo e impacto.
 10. Depois de cada marco verificável, sincronize checklist/checkpoint antes de declarar progresso concluído.
 
 ### Bootstrap Test
@@ -317,11 +335,13 @@ TAREFA ATUAL:
 Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-EM EXECUÇÃO
+AGUARDANDO CONFIRMAÇÃO HUMANA DA IDENTIDADE
 
-G3 — IDENTIDADE DO PROPRIETÁRIO:
-✅ decisão recebida
-🟡 criação/confirmação no Supabase Auth pendente
+PRÓXIMA AÇÃO:
+abrir o Magic Link enviado pelo Supabase Auth
+
+DEPOIS:
+continuar Tarefa 3; OAuth Server está desabilitado e precisará ser habilitado/configurado
 
 FONTE OPERACIONAL DO DIÁRIO:
 Supabase/Postgres

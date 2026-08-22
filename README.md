@@ -1,6 +1,6 @@
 # Cognitive Ledger
 
-**Status:** `FASE 1 — CONTINUIDADE CROSS-CHAT / EM EXECUÇÃO`  
+**Status:** `FASE 1 — CONTINUIDADE CROSS-CHAT / AGUARDANDO GATE HUMANO`  
 **Esta é a branch operacional ativa:** `design/cognitive-ledger-foundation`
 
 > **Seu pensamento não deve ficar preso ao chat onde aconteceu.**
@@ -11,9 +11,9 @@ O Cognitive Ledger é um sistema pessoal de continuidade cognitiva para preserva
 
 Se você é humano ou IA retomando este projeto, leia primeiro:
 
-1. [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md) — história, estado, Tarefas 1–9, runbooks, checkpoint e próximo passo;
-2. [`documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md`](documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md) — bootstrap, timeline, roadmap visual, visão humana e contexto para IA;
-3. [`documentacao/auditorias/2026-08-22-falha-bootstrap-main-e-correcao.md`](documentacao/auditorias/2026-08-22-falha-bootstrap-main-e-correcao.md) — erro de discoverability identificado e Bootstrap Test.
+1. [`documentacao/roadmaps/checklist-execucao-cross-chat.md`](documentacao/roadmaps/checklist-execucao-cross-chat.md) — **estado vivo e canônico de progresso**;
+2. [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md) — história, Tarefas 1–9, runbooks e arquitetura detalhada;
+3. [`documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md`](documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md) — bootstrap, timeline, roadmap visual, visão humana e contexto para IA.
 
 ## Fase atual
 
@@ -40,23 +40,20 @@ A Fase 1 MCP é **somente leitura**.
 ## Checkpoint atual
 
 ```text
-TAREFA ATUAL:
+TAREFAS CONCLUÍDAS:
 Tarefa 1 — baseline da API
+Tarefa 2 — clientes, auditoria e vetores
+
+TAREFA ATUAL:
+Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-operacionalmente concluída
-/
-Deno check ainda não comprovado
+AGUARDANDO GATE HUMANO G3
 
-PRÓXIMO PASSO:
-obter evidência real de:
-deno check supabase/functions/cognitive-ledger-api/index.ts
-
-DEPOIS:
-Tarefa 2 — clientes, auditoria e vetores
+PRÓXIMA AÇÃO:
+o proprietário escolher explicitamente
+a identidade/e-mail no Supabase Auth
 ```
-
-Não declarar a Tarefa 1 formalmente encerrada sem evidência real do `deno check`.
 
 ## Roadmap visual resumido
 
@@ -66,9 +63,9 @@ Não declarar a Tarefa 1 formalmente encerrada sem evidência real do `deno chec
 ✅ Diário privado
 ✅ Especificação cross-chat
 ✅ Plano de implementação
-🟡 Tarefa 1 — baseline / Deno check
-⬜ Tarefa 2 — clientes, auditoria e vetores
-⬜ Tarefa 3 — OAuth 2.1
+✅ Tarefa 1 — baseline / Deno check exit 0
+✅ Tarefa 2 — clientes, auditoria e vetores
+◆ Tarefa 3 — OAuth 2.1 / Gate Humano G3
 ⬜ Tarefa 4 — autorização Bearer por cliente
 ⬜ Tarefa 5 — embeddings
 ⬜ Tarefa 6 — API de recuperação
@@ -77,6 +74,30 @@ Não declarar a Tarefa 1 formalmente encerrada sem evidência real do `deno chec
 ⬜ Tarefa 9 — Testes A/B + auditoria
 ⏸️ Remediação estrutural do Git após validação cross-chat
 ```
+
+### ◆ GATE HUMANO G3 — Identidade do proprietário
+
+**Decisão necessária**  
+Escolher explicitamente qual endereço de e-mail será a identidade do proprietário no Supabase Auth.
+
+**Por que precisa de você**  
+A identidade que recebe autoridade sobre o Ledger é uma decisão do proprietário e não pode ser inferida pela equipe.
+
+**Impacto**  
+A Tarefa 3 não pode criar/confirmar a identidade do proprietário nem validar o fluxo OAuth real até essa escolha.
+
+## Evidências das Tarefas 1 e 2
+
+### Tarefa 1
+
+- [`documentacao/auditorias/2026-08-21-tarefa-1-baseline-cross-chat.md`](documentacao/auditorias/2026-08-21-tarefa-1-baseline-cross-chat.md)
+- `deno check supabase/functions/cognitive-ledger-api/index.ts` → `EXIT 0`
+
+### Tarefa 2
+
+- migration: [`supabase/migrations/20260821_cross_chat_fase1.sql`](supabase/migrations/20260821_cross_chat_fase1.sql)
+- auditoria: [`documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md`](documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md)
+- `vector(1024)` + HNSW + RPC híbrida + RLS + permissions boundary: `VALIDADOS`
 
 ## Modelo central
 
@@ -170,32 +191,27 @@ Se a sessão não possuir acesso operacional real, declarar `NÃO DISPONÍVEL / 
 - 02:11 — bootstrap/discoverability identificado como requisito crítico;
 - 02:12 — timeline + roadmap visual + estado explícito identificados como requisito de consciência situacional;
 - 02:13 — princípio transversal de continuidade observável consolidado;
-- 02:25 — falha de execução confirma que registrar o princípio sem aplicá-lo à porta de entrada é insuficiente; Bootstrap Test é adicionado ao critério de aceite.
+- 02:25 — Bootstrap Test adicionado ao critério de aceite;
+- 02:38 — correção da `main` confirmada visualmente;
+- 02:51 — gates autoexplicativos + sincronização obrigatória do checklist formalizados;
+- 02:xx — Tarefa 1 concluída com `deno check` exit 0;
+- 02:xx — Tarefa 2 concluída e validada.
 
 ## Documentação operacional principal
 
+- [`documentacao/roadmaps/checklist-execucao-cross-chat.md`](documentacao/roadmaps/checklist-execucao-cross-chat.md)
 - [`documentacao/especificacoes/2026-08-21-acesso-cross-chat-fase-1.md`](documentacao/especificacoes/2026-08-21-acesso-cross-chat-fase-1.md)
 - [`documentacao/planos/2026-08-21-acesso-cross-chat-fase-1.md`](documentacao/planos/2026-08-21-acesso-cross-chat-fase-1.md)
 - [`documentacao/auditorias/2026-08-21-tarefa-1-baseline-cross-chat.md`](documentacao/auditorias/2026-08-21-tarefa-1-baseline-cross-chat.md)
+- [`documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md`](documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md)
 - [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md)
 - [`documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md`](documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md)
-- [`documentacao/auditorias/2026-08-22-falha-bootstrap-main-e-correcao.md`](documentacao/auditorias/2026-08-22-falha-bootstrap-main-e-correcao.md)
 
 ## Privacidade
 
 O repositório está **público temporariamente** para permitir continuidade das validações de CI. Isso não é uma decisão permanente de visibilidade.
 
-Não adicionar novos dados privados reais ao Git público:
-
-- Eventos Cognitivos canônicos;
-- fontes brutas pessoais;
-- senhas;
-- tokens;
-- API keys;
-- secrets;
-- connection strings reais;
-- verificadores de autenticação;
-- dumps/snapshots privados.
+Não adicionar novos dados privados reais ao Git público: Eventos Cognitivos canônicos, fontes brutas pessoais, senhas, tokens, API keys, secrets, connection strings reais, verificadores de autenticação ou dumps/snapshots privados.
 
 A remediação estrutural do histórico público está **adiada, não resolvida**, e depende de novo gate após a validação cross-chat.
 
@@ -209,12 +225,13 @@ O princípio de continuidade e consciência situacional foi identificado como tr
 
 Antes de continuar uma missão relacionada a este projeto:
 
-1. leia o roadmap canônico;
-2. confirme o checkpoint real;
-3. verifique ferramentas disponíveis;
-4. não trate `NÃO VERIFICADO` como concluído;
-5. se houver acesso ao Ledger, consulte os eventos relevantes;
-6. se não houver acesso, declare a limitação;
-7. preserve memória recuperada separada da análise atual;
-8. continue do próximo passo verificável;
-9. não reabra decisões adiadas sem gate correspondente.
+1. leia primeiro o **checklist vivo**;
+2. use o roadmap detalhado para arquitetura e runbooks;
+3. confirme o checkpoint real;
+4. verifique ferramentas disponíveis;
+5. não trate `NÃO VERIFICADO` como concluído;
+6. se houver acesso ao Ledger, consulte os eventos relevantes;
+7. se não houver acesso, declare a limitação;
+8. preserve memória recuperada separada da análise atual;
+9. nunca apresente um gate apenas por código;
+10. sincronize checklist/checkpoint após cada marco verificável.

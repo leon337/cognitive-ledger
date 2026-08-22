@@ -1,8 +1,9 @@
 # Auditoria — Tarefa 1 da Fase 1 Cross-Chat
 
-**Data:** 2026-08-21
-**Tarefa:** Baseline versionado e limpeza do boundary atual
-**Estado:** `EXECUÇÃO CONCLUÍDA / DENO CHECK NÃO EXECUTADO`
+**Data original:** 2026-08-21  
+**Fechamento formal:** 2026-08-22  
+**Tarefa:** Baseline versionado e limpeza do boundary atual  
+**Estado:** `CONCLUÍDA / VALIDADA`
 
 ## Evidências verificadas
 
@@ -17,26 +18,38 @@
 9. A documentação de autenticação foi atualizada no commit `c0f8935bf56e2a6642c8dc8ce93f3f899a9dca22`.
 10. O deploy gerado por esse commit documental, `dep-da434iht0dsc73a5gpvg`, também terminou `live` e repetiu o smoke test com 13 registros disponíveis.
 11. O Evento Cognitivo `ec-2026-08-21-062800-001` foi alterado de `aberto` para `resolvido`, com evidência do deploy e smoke test.
-
-## Verificação não executada
-
-O passo literal:
+12. Em 2026-08-22 foi utilizado um dispositivo remoto autorizado apenas como ambiente temporário de verificação. Foi clonado, em diretório temporário, o commit `50c31ecba1ca6c4e5bd01cdbaf6ecaf5f390ef43` da branch `design/cognitive-ledger-foundation`.
+13. O artefato oficial do Deno `2.9.4` foi baixado e validado pelo SHA-256 fixado no workflow: `c24f955d9fbfe0ea5ae2b501c8e71ae76e31e4c9782390a54a284b3364fda725` — resultado `OK`.
+14. `deno --version` confirmou `deno 2.9.4`.
+15. O comando literal exigido pelo plano foi executado:
 
 ```text
 deno check supabase/functions/cognitive-ledger-api/index.ts
 ```
 
-não pôde ser executado no runtime desta sessão porque o binário `deno` não está instalado e a rede do runtime não conseguiu resolver `deno.land` para instalação.
+Resultado:
 
-Isso deve permanecer classificado como `NÃO VERIFICADO`; a existência da mesma fonte como Edge Function `ACTIVE` no Supabase é evidência de funcionamento do runtime implantado, mas não substitui formalmente o comando `deno check` previsto no plano.
+```text
+Check supabase/functions/cognitive-ledger-api/index.ts
+DENO_CHECK_EXIT=0
+```
 
-## Resultado
+## Histórico da pendência
+
+O `deno check` ficou inicialmente `NÃO VERIFICADO` porque o runtime original da sessão não possuía Deno e não tinha resolução externa suficiente para instalá-lo. GitHub Actions foi preparado como rota de CI, mas os conectores disponíveis posteriormente não retornaram um run associado aos commits recentes.
+
+A pendência não foi simplesmente dispensada. O comando exato foi executado em outro ambiente autorizado, com checkout temporário e Deno verificado pelo mesmo checksum do workflow.
+
+## Resultado final
 
 - baseline versionado: `VERIFICADO`;
 - suíte Node do diário privado: `GREEN`;
 - variável residual: `REMOVIDA`;
 - deploy/smoke após remoção: `VERIFICADO`;
 - regressão operacional observada: `NÃO`;
-- `deno check`: `NÃO EXECUTADO / NÃO VERIFICADO`.
+- `deno check`: `GREEN / EXIT 0`;
+- Tarefa 1: `CONCLUÍDA / VALIDADA`.
 
-A passagem para a Tarefa 2 depende de decisão do MESTRE/HUMAN_GATE sobre executar `deno check` por outro ambiente antes de avançar ou aceitar explicitamente o adiamento dessa verificação para o CI que instalará Deno.
+## Próximo passo
+
+A Tarefa 2 — schema de clientes, auditoria e vetores — está autorizada pelo plano aprovado e pode ser executada sem novo gate humano, respeitando RLS, permissions boundary e Security Advisor.

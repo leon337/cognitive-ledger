@@ -2,7 +2,7 @@
 
 > **START HERE — porta de entrada canônica para humanos e IAs**
 
-**Estado atual:** `FASE 1 — CONTINUIDADE CROSS-CHAT / TAREFA 5 AGUARDANDO G4`  
+**Estado atual:** `FASE 1 — CONTINUIDADE CROSS-CHAT / TAREFA 5 BLOQUEADA POR SALDO OPENAI`  
 **Branch operacional ativa:** [`design/cognitive-ledger-foundation`](https://github.com/leon337/cognitive-ledger/tree/design/cognitive-ledger-foundation)  
 **Natureza da `main`:** entrypoint de continuidade e navegação; a implementação ativa ainda não foi mergeada integralmente aqui.
 
@@ -20,8 +20,8 @@ Estado verificável atual:
 ✅ Tarefa 1 — baseline da API / deno check exit 0
 ✅ Tarefa 2 — clientes, auditoria e vetores
 ✅ Tarefa 3 — OAuth 2.1 / G2 PASS end-to-end
-✅ Tarefa 4 — Bearer por cliente + auditoria fail-closed / GREEN 9/9
-◆ Tarefa 5 — embeddings / AGUARDANDO GATE HUMANO G4
+✅ Tarefa 4 — Bearer por cliente + auditoria fail-closed
+❗ Tarefa 5 — embeddings / BACKFILL BLOQUEADO POR SALDO OPENAI
 ⬜ Tarefa 6 — API de recuperação
 ⬜ Tarefa 7 — MCP remoto
 ⬜ Tarefa 8 — deploy + ChatGPT
@@ -33,42 +33,41 @@ A Fase 1 MCP é deliberadamente **somente leitura**.
 
 ## 2. Próximo passo
 
-### ◆ GATE HUMANO G4 — Configurar chave da OpenAI para embeddings
+### ◆ GATE HUMANO — Saldo/crédito da OpenAI API
 
 **Ação necessária**  
-Disponibilizar uma `OPENAI_API_KEY` válida para o ambiente da Supabase Edge Function por um canal seguro. Não enviar a chave em mensagem, commit, arquivo público, log ou screenshot.
+Disponibilizar saldo/crédito utilizável para a conta/projeto OpenAI associado à chave já configurada no Supabase.
 
 **Por que precisa do proprietário**  
-A credencial possui autoridade e potencial impacto de cobrança. A equipe não deve criar, selecionar ou expor essa credencial sem controle explícito do proprietário.
+A execução real do backfill recebeu `openai_embedding_http_429_credit_balance_exhausted`. Billing, método de pagamento e aquisição de créditos são decisões financeiras do proprietário.
 
 **Impacto**  
-Sem a chave, não é possível validar embeddings reais, fazer backfill do corpus nem concluir o caminho semântico da Fase 1.
+Sem saldo disponível, o código de embeddings permanece implementado e testado, mas não é possível produzir vetores reais, concluir o backfill e fechar a Tarefa 5.
+
+Depois da resolução, a equipe deve retomar automaticamente: reativar backfill → validar 100% do corpus → desligar manutenção → fechar Tarefa 5 → iniciar Tarefa 6.
 
 ## 3. Evidência mais recente
 
 ```text
-G2 OAuth:
-authorization code exchange ✅
-client_id no token         ✅
-issuer/audience             ✅
-UserInfo                    ✅
-refresh token               ✅
-UserInfo após refresh       ✅
-
-Tarefa 4:
-RED    1 PASS / 7 FAIL
-GREEN  9 PASS / 0 FAIL
-deno check index.ts         ✅
-Node OAuth/servidor 13/13   ✅
+G4 / OPENAI_API_KEY             ✅ resolvido
+text-embedding-3-large / 1024   ✅ implementado
+indexação sem bloquear gravação ✅
+/admin/reindexar Basic-only     ✅
+Edge Function v6                ✅ ACTIVE
+Deno após instrumentação        ✅ 15/15
+executor privado Node           ✅ 9/9
+backfill real                   ❌ 0/25
+causa                           ✅ openai_embedding_http_429_credit_balance_exhausted
+executor automático             ✅ desligado após diagnóstico
 ```
 
-A nova boundary Bearer está implementada e testada no código, mas **a Edge Function de produção ainda não foi redeployada com essa versão**. Não tratar runtime como atualizado até existir evidência de deploy.
+A boundary Bearer da Tarefa 4 está incluída na Edge Function atualmente implantada.
 
 ## 4. Documentos canônicos — leia nesta ordem
 
 1. [Checklist Vivo — Execução Cross-Chat](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/roadmaps/checklist-execucao-cross-chat.md)
 2. [Roadmap Canônico — Continuidade Cross-Chat](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md)
-3. [Auditoria — Tarefa 4 — Bearer e auditoria fail-closed](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/auditorias/2026-08-22-tarefa-4-autorizacao-bearer-auditoria.md)
+3. [Auditoria — Tarefa 5 — embeddings e bloqueio de crédito](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/auditorias/2026-08-22-tarefa-5-embeddings-bloqueio-credito.md)
 4. [Padrão de Continuidade e Consciência Situacional](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md)
 5. [Plano aprovado da Fase 1](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/planos/2026-08-21-acesso-cross-chat-fase-1.md)
 

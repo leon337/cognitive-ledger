@@ -52,10 +52,7 @@ test("encaminha timeline com credencial interna separada", async () => {
   const app = await iniciar({
     fetchImpl: async (url, opcoes) => {
       chamada = { url: String(url), opcoes };
-      return new Response(JSON.stringify({ registros: [] }), {
-        status: 200,
-        headers: { "content-type": "application/json" }
-      });
+      return new Response(JSON.stringify({ registros: [] }), { status: 200, headers: { "content-type": "application/json" } });
     }
   });
   try {
@@ -93,10 +90,7 @@ test("verifica a API com credencial interna", async () => {
     apiUrl: "https://api.exemplo/cognitive-ledger-api",
     fetchImpl: async (url, opcoes) => {
       chamada = { url: String(url), opcoes };
-      return new Response(JSON.stringify({ registros: [{ id: "a" }, { id: "b" }] }), {
-        status: 200,
-        headers: { "content-type": "application/json" }
-      });
+      return new Response(JSON.stringify({ registros: [{ id: "a" }, { id: "b" }] }), { status: 200, headers: { "content-type": "application/json" } });
     }
   });
   assert.equal(resultado.total, 2);
@@ -105,15 +99,12 @@ test("verifica a API com credencial interna", async () => {
 });
 
 test("verificação de API falha quando upstream não autentica", async () => {
-  await assert.rejects(
-    verificarApi({
-      usuario: "leandro",
-      credencialApi: "api",
-      apiUrl: "https://api.exemplo/cognitive-ledger-api",
-      fetchImpl: async () => new Response("não autorizado", { status: 401 })
-    }),
-    /API indisponível ou não autorizada: 401/
-  );
+  await assert.rejects(verificarApi({
+    usuario: "leandro",
+    credencialApi: "api",
+    apiUrl: "https://api.exemplo/cognitive-ledger-api",
+    fetchImpl: async () => new Response("não autorizado", { status: 401 })
+  }), /API indisponível ou não autorizada: 401/);
 });
 
 test("serve configuração OAuth em runtime sem vazar credencial interna", async () => {
@@ -152,9 +143,7 @@ test("reindexa via endpoint Basic interno sem usar credencial humana", async () 
     limite: 7,
     fetchImpl: async (url, opcoes) => {
       chamada = { url: String(url), opcoes };
-      return new Response(JSON.stringify({ processados: 7, falhas: 0, restantes_estimados: 2 }), {
-        status: 200, headers: { "content-type": "application/json" }
-      });
+      return new Response(JSON.stringify({ processados: 7, falhas: 0, restantes_estimados: 2, erros: {} }), { status: 200, headers: { "content-type": "application/json" } });
     }
   });
   assert.equal(chamada.url, "https://api.exemplo/cognitive-ledger-api/admin/reindexar");
@@ -162,5 +151,5 @@ test("reindexa via endpoint Basic interno sem usar credencial humana", async () 
   assert.equal(chamada.opcoes.headers.Authorization, autorizacaoApi);
   assert.notEqual(chamada.opcoes.headers.Authorization, autorizacaoSite);
   assert.deepEqual(JSON.parse(chamada.opcoes.body), { limite: 7 });
-  assert.deepEqual(resultado, { processados: 7, falhas: 0, restantes_estimados: 2 });
+  assert.deepEqual(resultado, { processados: 7, falhas: 0, restantes_estimados: 2, erros: {} });
 });

@@ -1,6 +1,6 @@
 # Cognitive Ledger
 
-**Status:** `FASE 1 — CONTINUIDADE CROSS-CHAT / TAREFA 3 EM EXECUÇÃO`  
+**Status:** `FASE 1 — CONTINUIDADE CROSS-CHAT / AGUARDANDO CONFIRMAÇÃO HUMANA DA IDENTIDADE`  
 **Esta é a branch operacional ativa:** `design/cognitive-ledger-foundation`
 
 > **Seu pensamento não deve ficar preso ao chat onde aconteceu.**
@@ -12,9 +12,9 @@ O Cognitive Ledger é um sistema pessoal de continuidade cognitiva para preserva
 Se você é humano ou IA retomando este projeto, leia primeiro:
 
 1. [`documentacao/roadmaps/checklist-execucao-cross-chat.md`](documentacao/roadmaps/checklist-execucao-cross-chat.md) — **estado vivo e canônico de progresso**;
-2. [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md) — história, estado, Tarefas 1–9, runbooks, checkpoint e próximo passo;
-3. [`documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md`](documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md) — bootstrap, timeline, roadmap visual, visão humana e contexto para IA;
-4. [`documentacao/auditorias/2026-08-22-falha-bootstrap-main-e-correcao.md`](documentacao/auditorias/2026-08-22-falha-bootstrap-main-e-correcao.md) — erro de discoverability identificado e Bootstrap Test.
+2. [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md) — história, Tarefas 1–9, runbooks e arquitetura detalhada;
+3. [`documentacao/auditorias/2026-08-22-tarefa-3-oauth-parcial.md`](documentacao/auditorias/2026-08-22-tarefa-3-oauth-parcial.md) — evidência atual da Tarefa 3;
+4. [`documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md`](documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md) — bootstrap, timeline, roadmap visual, visão humana e contexto para IA.
 
 ## Fase atual
 
@@ -49,15 +49,21 @@ TAREFA ATUAL:
 Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-EM EXECUÇÃO
+AGUARDANDO CONFIRMAÇÃO HUMANA DA IDENTIDADE
 
 G3 — IDENTIDADE DO PROPRIETÁRIO:
 ✅ decisão recebida
-🟡 identidade ainda não criada/confirmada no Supabase Auth
+✅ identidade criada no Supabase Auth
+🟡 confirmação/login ainda pendente
+
+CRIPTOGRAFIA:
+✅ JWKS ES256 / P-256
+
+OAUTH SERVER:
+❗ desabilitado — feature_disabled
 
 PRÓXIMA AÇÃO:
-criar/confirmar a identidade por mecanismo suportado do Supabase Auth
-e continuar a preparação do OAuth 2.1.
+proprietário abrir o Magic Link recebido e concluir a confirmação/login.
 ```
 
 O valor da identidade escolhida é privado e **não deve ser versionado no Git público**.
@@ -72,7 +78,7 @@ O valor da identidade escolhida é privado e **não deve ser versionado no Git p
 ✅ Plano de implementação
 ✅ Tarefa 1 — baseline / Deno check exit 0
 ✅ Tarefa 2 — clientes, auditoria e vetores
-🟡 Tarefa 3 — OAuth 2.1 / G3 resolvido / identidade Auth pendente
+◆ Tarefa 3 — OAuth 2.1 / confirmar identidade do proprietário
 ⬜ Tarefa 4 — autorização Bearer por cliente
 ⬜ Tarefa 5 — embeddings
 ⬜ Tarefa 6 — API de recuperação
@@ -82,18 +88,18 @@ O valor da identidade escolhida é privado e **não deve ser versionado no Git p
 ⏸️ Remediação estrutural do Git após validação cross-chat
 ```
 
-### ✅ GATE HUMANO G3 — Identidade do proprietário
+### ◆ GATE HUMANO — Confirmar controle da identidade
 
-**Decisão necessária**  
-Resolvida pelo proprietário.
+**Ação necessária**  
+Abrir o Magic Link enviado pelo Supabase Auth e concluir a confirmação/login.
 
-**Estado operacional**  
-A identidade escolhida ainda precisa ser criada/confirmada no Supabase Auth por mecanismo suportado de autenticação. A equipe não fará `INSERT` direto em `auth.users`.
+**Por que precisa de você**  
+A prova de controle da caixa de e-mail pertence ao proprietário. A equipe não pode clicar nem consumir esse link em seu lugar.
 
-**Privacidade**  
-O endereço escolhido permanece fora do Git público.
+**Impacto**  
+A identidade já existe no Auth, mas ainda não pode ser tratada como validada para o OAuth do proprietário.
 
-## Evidências das Tarefas 1 e 2
+## Evidências das Tarefas 1–3
 
 ### Tarefa 1
 
@@ -105,6 +111,15 @@ O endereço escolhido permanece fora do Git público.
 - migration: [`supabase/migrations/20260821_cross_chat_fase1.sql`](supabase/migrations/20260821_cross_chat_fase1.sql)
 - auditoria: [`documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md`](documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md)
 - `vector(1024)` + HNSW + RPC híbrida + RLS + permissions boundary: `VALIDADOS`
+
+### Tarefa 3 — parcial
+
+- auditoria: [`documentacao/auditorias/2026-08-22-tarefa-3-oauth-parcial.md`](documentacao/auditorias/2026-08-22-tarefa-3-oauth-parcial.md)
+- `mcp/src/oauth.mjs`: versionado;
+- `mcp/public/oauth/consent.html` + `consent.js`: versionados;
+- `mcp/testes/oauth.test.mjs`: `5/5 PASS`;
+- JWKS: ES256 / P-256;
+- OAuth Server: `feature_disabled`.
 
 ## Modelo central
 
@@ -203,7 +218,8 @@ Se a sessão não possuir acesso operacional real, declarar `NÃO DISPONÍVEL / 
 - 02:51 — gates autoexplicativos + sincronização obrigatória do checklist formalizados;
 - Tarefa 1 concluída com `deno check` exit 0;
 - Tarefa 2 concluída e validada;
-- Gate Humano G3 resolvido; valor da identidade preservado fora do Git.
+- G3 resolvido; identidade criada por Supabase Auth e aguardando confirmação humana;
+- JWKS ES256 confirmado; OAuth Server ainda desabilitado.
 
 ## Documentação operacional principal
 
@@ -212,6 +228,7 @@ Se a sessão não possuir acesso operacional real, declarar `NÃO DISPONÍVEL / 
 - [`documentacao/planos/2026-08-21-acesso-cross-chat-fase-1.md`](documentacao/planos/2026-08-21-acesso-cross-chat-fase-1.md)
 - [`documentacao/auditorias/2026-08-21-tarefa-1-baseline-cross-chat.md`](documentacao/auditorias/2026-08-21-tarefa-1-baseline-cross-chat.md)
 - [`documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md`](documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md)
+- [`documentacao/auditorias/2026-08-22-tarefa-3-oauth-parcial.md`](documentacao/auditorias/2026-08-22-tarefa-3-oauth-parcial.md)
 - [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md)
 - [`documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md`](documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md)
 

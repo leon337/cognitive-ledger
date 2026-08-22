@@ -1,86 +1,220 @@
 # Cognitive Ledger
 
-**Status:** `DESCOBERTA / DESIGN / PROTÓTIPO ESTRUTURAL`
+**Status:** `FASE 1 — CONTINUIDADE CROSS-CHAT / EM EXECUÇÃO`  
+**Esta é a branch operacional ativa:** `design/cognitive-ledger-foundation`
 
-O Cognitive Ledger é um sistema pessoal de continuidade cognitiva e conhecimento para preservar ideias, decisões, aprendizados, conversas e a evolução do pensamento ao longo de chats com IA, projetos, ferramentas e tempo.
+> **Seu pensamento não deve ficar preso ao chat onde aconteceu.**
 
-O princípio central é simples:
+O Cognitive Ledger é um sistema pessoal de continuidade cognitiva para preservar e recuperar ideias, decisões, aprendizados, hipóteses, projetos e sua evolução ao longo de chats com IA, ferramentas e tempo.
 
-> Seu pensamento não deve ficar preso ao chat onde aconteceu.
+## Comece aqui
 
-Este repositório está sendo estruturado como uma fonte de verdade controlada pelo usuário para registros cognitivos estruturados e suas fontes de apoio. O produto pretende combinar recuperação cronológica, continuidade semântica, proveniência e consulta assistida por IA.
+Se você é humano ou IA retomando este projeto, leia primeiro:
+
+1. [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md) — história, estado, Tarefas 1–9, runbooks, checkpoint e próximo passo;
+2. [`documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md`](documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md) — bootstrap, timeline, roadmap visual, visão humana e contexto para IA;
+3. [`documentacao/auditorias/2026-08-22-falha-bootstrap-main-e-correcao.md`](documentacao/auditorias/2026-08-22-falha-bootstrap-main-e-correcao.md) — erro de discoverability identificado e Bootstrap Test.
 
 ## Fase atual
 
-O projeto está em descoberta de produto, arquitetura da informação e prototipação estrutural. Existe uma camada web estática em `site/` destinada a amadurecer navegação, hierarquia e apresentação de conteúdo antes da etapa de design visual no Google Stitch.
+Objetivo vigente:
 
-## Idioma operacional
+> concluir a Fase 1 de acesso cross-chat para que um novo chat autorizado consiga consultar o Cognitive Ledger e recuperar contexto sem depender da conversa original.
 
-Português do Brasil é o idioma operacional deste repositório.
+Arquitetura-alvo:
 
-- documentação e nomes criados por nós devem preferir português;
-- nomes impostos por convenções técnicas, como `README.md`, `index.html`, `.github/` e extensões de arquivo, permanecem como exigido pelas ferramentas;
-- identificadores internos podem manter termos técnicos quando isso evitar ambiguidade ou facilitar integração.
+```text
+ChatGPT / MCF
+      ↓
+OAuth 2.1
+      ↓
+MCP remoto
+      ↓
+cognitive-ledger-api
+      ↓
+Supabase / Postgres
+```
 
-## Estrutura principal
+A Fase 1 MCP é **somente leitura**.
 
-- `documentacao/` — visão de produto, domínio, arquitetura da informação, decisões, planos e especificações;
-- `diario/` — registros cognitivos estruturados organizados cronologicamente;
-- `fontes/` — proveniência e fontes aprovadas que sustentam os registros;
-- `site/` — protótipo navegável em HTML, CSS e JavaScript simples;
-- `conceitos/` — conceitos em evolução, quando necessários.
+## Checkpoint atual
 
-## Documentação operacional
+```text
+TAREFA ATUAL:
+Tarefa 1 — baseline da API
 
-- `documentacao/autenticacao-e-recuperacao-de-acesso.md` — descreve o mecanismo atual de autenticação do diário privado, a separação entre acesso humano e credencial interna, o incidente de perda de senha de 2026-08-21, o retrabalho gerado, o fechamento da variável residual no Render e a necessidade futura de recuperação autônoma de senha.
-- `documentacao/recomendacoes/2026-08-21-mcp-e-cloud-infrastructure.md` — registra a recomendação de manter a Fase 1 do MCP independente da VPS enquanto `cloud-infrastructure` amadurece seus mecanismos de plataforma; qualquer hospedagem futura na VPS exige reavaliação e novo gate humano.
-- `documentacao/decisoes/2026-08-21-visibilidade-temporaria-repositorio.md` — registra que o repositório foi tornado público temporariamente para destravar o CI, sem alterar a privacidade do diário, dos secrets ou dos dados operacionais.
+ESTADO:
+operacionalmente concluída
+/
+Deno check ainda não comprovado
+
+PRÓXIMO PASSO:
+obter evidência real de:
+deno check supabase/functions/cognitive-ledger-api/index.ts
+
+DEPOIS:
+Tarefa 2 — clientes, auditoria e vetores
+```
+
+Não declarar a Tarefa 1 formalmente encerrada sem evidência real do `deno check`.
+
+## Roadmap visual resumido
+
+```text
+✅ Fundação e modelo cognitivo
+✅ Persistência Supabase/Postgres
+✅ Diário privado
+✅ Especificação cross-chat
+✅ Plano de implementação
+🟡 Tarefa 1 — baseline / Deno check
+⬜ Tarefa 2 — clientes, auditoria e vetores
+⬜ Tarefa 3 — OAuth 2.1
+⬜ Tarefa 4 — autorização Bearer por cliente
+⬜ Tarefa 5 — embeddings
+⬜ Tarefa 6 — API de recuperação
+⬜ Tarefa 7 — MCP remoto
+⬜ Tarefa 8 — deploy + ChatGPT
+⬜ Tarefa 9 — Testes A/B + auditoria
+⏸️ Remediação estrutural do Git após validação cross-chat
+```
 
 ## Modelo central
 
 Uma conversa é uma fonte. A unidade durável é o **Evento Cognitivo**.
 
-Cada Evento Cognitivo separa duas camadas:
+Cada Evento Cognitivo separa:
 
-1. **Registro Cognitivo** — interpretação estruturada: contexto, ideias, decisões, hipóteses, aprendizados, questões abertas e próximos passos;
-2. **Registro de Fonte** — proveniência e, quando apropriado, referência ou cópia autorizada da fonte original.
+1. **Registro Cognitivo** — contexto, resumo, ideias, decisões, hipóteses, aprendizados, questões abertas e próximos passos;
+2. **Registro de Fonte** — proveniência e, quando necessário e autorizado, conteúdo bruto separado.
 
 O sistema nunca deve apresentar interpretação gerada por IA como se fosse a fonte original.
 
-## Protótipo navegável
-
-O protótipo em `site/` é deliberadamente simples. Seu objetivo é permitir que a estrutura do produto seja usada e criticada durante a descoberta:
+## Fonte operacional de verdade
 
 ```text
-conceito
-  ↓
-estrutura de informação
-  ↓
-HTML + CSS + JavaScript simples
-  ↓
-uso e revisão
-  ↓
-refinamento
-  ↓
-briefing + link para Google Stitch
-  ↓
-design visual final
+Supabase / Postgres
+=
+fonte operacional atual dos Eventos Cognitivos
 ```
 
-A responsabilidade desta fase é definir o que existe, como as informações se relacionam e como o usuário navega. Cores, identidade visual, tipografia final e acabamento ficam para uma etapa posterior.
+```text
+Git
+=
+código + documentação + histórico + exportação controlada
+```
+
+Ler `diario/*.md` no Git não equivale a consultar o diário operacional atual.
+
+## Como gravar no diário hoje
+
+Quando houver acesso operacional autorizado e o usuário disser “registre isso no meu diário”:
+
+```text
+intenção explícita
+      ↓
+resolver escopo
+      ↓
+criar Evento Cognitivo
+      ↓
+separar Fonte
+      ↓
+criar relações
+      ↓
+persistir por registrar_evento_cognitivo(...)
+      ↓
+ler de volta
+      ↓
+verificar
+      ↓
+somente então confirmar
+```
+
+O runbook completo está no roadmap canônico.
+
+## Como ler o diário hoje
+
+Quando houver acesso operacional autorizado:
+
+```text
+identificar intenção
+      ↓
+consultar Supabase/Postgres
+      ↓
+recuperar conjunto relevante
+      ↓
+consultar relações quando necessário
+      ↓
+preservar hipótese/decisão/questão aberta
+      ↓
+separar MEMÓRIA RECUPERADA de ANÁLISE NOVA
+```
+
+Se a sessão não possuir acesso operacional real, declarar `NÃO DISPONÍVEL / NÃO VERIFICADO` e não fingir consulta.
+
+## Timeline resumida
+
+### 2026-08-21
+
+- 01:35 — Cognitive Ledger consolidado como camada externa de continuidade;
+- 03:01 — protocolo operacional visível do MCF oficializado;
+- 04:29 — primeira validação visual;
+- 06:26 — incidente de autenticação revela acoplamento;
+- 07:37 — MCP permanece fora da VPS nesta fase;
+- 08:46 — repositório público temporariamente para CI;
+- 09:26 — remediação do histórico público adiada;
+- 21:26 — prioridade cross-chat reafirmada;
+- 22:36 — roadmap canônico + runbook formalizados.
+
+### 2026-08-22
+
+- 02:11 — bootstrap/discoverability identificado como requisito crítico;
+- 02:12 — timeline + roadmap visual + estado explícito identificados como requisito de consciência situacional;
+- 02:13 — princípio transversal de continuidade observável consolidado;
+- 02:25 — falha de execução confirma que registrar o princípio sem aplicá-lo à porta de entrada é insuficiente; Bootstrap Test é adicionado ao critério de aceite.
+
+## Documentação operacional principal
+
+- [`documentacao/especificacoes/2026-08-21-acesso-cross-chat-fase-1.md`](documentacao/especificacoes/2026-08-21-acesso-cross-chat-fase-1.md)
+- [`documentacao/planos/2026-08-21-acesso-cross-chat-fase-1.md`](documentacao/planos/2026-08-21-acesso-cross-chat-fase-1.md)
+- [`documentacao/auditorias/2026-08-21-tarefa-1-baseline-cross-chat.md`](documentacao/auditorias/2026-08-21-tarefa-1-baseline-cross-chat.md)
+- [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md)
+- [`documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md`](documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md)
+- [`documentacao/auditorias/2026-08-22-falha-bootstrap-main-e-correcao.md`](documentacao/auditorias/2026-08-22-falha-bootstrap-main-e-correcao.md)
 
 ## Privacidade
 
-Este repositório está **público temporariamente** por decisão operacional do proprietário para permitir a continuidade das validações de CI. Essa condição não é uma decisão permanente de visibilidade e deve ser reavaliada quando o motivo operacional deixar de existir.
+O repositório está **público temporariamente** para permitir continuidade das validações de CI. Isso não é uma decisão permanente de visibilidade.
 
-A visibilidade pública do código **não autoriza a publicação de dados privados do Cognitive Ledger**. Senhas, tokens, API keys, secrets, connection strings reais, dados canônicos do diário e fontes brutas pessoais permanecem proibidos no Git.
+Não adicionar novos dados privados reais ao Git público:
 
-O site publicado deve usar dados de demonstração ou conteúdo conscientemente selecionado para exposição.
+- Eventos Cognitivos canônicos;
+- fontes brutas pessoais;
+- senhas;
+- tokens;
+- API keys;
+- secrets;
+- connection strings reais;
+- verificadores de autenticação;
+- dumps/snapshots privados.
 
-A decisão temporária e os critérios de reversão estão documentados em `documentacao/decisoes/2026-08-21-visibilidade-temporaria-repositorio.md`.
+A remediação estrutural do histórico público está **adiada, não resolvida**, e depende de novo gate após a validação cross-chat.
 
 ## Relação com o MCF
 
-O Cognitive Ledger é um projeto separado do MCF. Futuramente pode fornecer continuidade/contexto ao MCF e receber resultados ou aprendizados de volta, mas nenhum dos dois deve ser tratado silenciosamente como fonte de verdade do outro.
+O Cognitive Ledger e o MCF são projetos distintos.
 
-Nesta fase, os contratos de agentes do MCF também estão sendo usados como método de coordenação do trabalho de produto, arquitetura, frontend, segurança, integração e auditoria. Isso não equivale a afirmar que existem processos cognitivos independentes executando simultaneamente quando a execução ocorre em uma única sessão.
+O princípio de continuidade e consciência situacional foi identificado como transversal e deverá ser planejado futuramente também para o MCF. Essa integração ainda não foi implementada.
+
+## Bootstrap para IA / agente
+
+Antes de continuar uma missão relacionada a este projeto:
+
+1. leia o roadmap canônico;
+2. confirme o checkpoint real;
+3. verifique ferramentas disponíveis;
+4. não trate `NÃO VERIFICADO` como concluído;
+5. se houver acesso ao Ledger, consulte os eventos relevantes;
+6. se não houver acesso, declare a limitação;
+7. preserve memória recuperada separada da análise atual;
+8. continue do próximo passo verificável;
+9. não reabra decisões adiadas sem gate correspondente.

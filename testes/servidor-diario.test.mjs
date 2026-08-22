@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { once } from "node:events";
-import { criarServidor, verificarApi } from "../servidor-diario-core.mjs";
+import { criarServidor, reindexarApi, verificarApi } from "../servidor-diario-core.mjs";
 
 const basic = (usuario, valor) => `Basic ${Buffer.from(`${usuario}:${valor}`).toString("base64")}`;
 const autorizacaoSite = basic("leandro", "site");
@@ -99,7 +99,6 @@ test("verifica a API com credencial interna", async () => {
       });
     }
   });
-
   assert.equal(resultado.total, 2);
   assert.equal(chamada.url, "https://api.exemplo/cognitive-ledger-api/timeline");
   assert.equal(chamada.opcoes.headers.Authorization, autorizacaoApi);
@@ -116,7 +115,6 @@ test("verificação de API falha quando upstream não autentica", async () => {
     /API indisponível ou não autorizada: 401/
   );
 });
-
 
 test("serve configuração OAuth em runtime sem vazar credencial interna", async () => {
   const app = await iniciar();
@@ -140,8 +138,29 @@ test("mapeia rotas limpas de login e consentimento e aplica CSP OAuth restrita",
     const csp = respostaLogin.headers.get("content-security-policy") || "";
     assert.match(csp, /https:\/\/cdn\.jsdelivr\.net/);
     assert.match(csp, /https:\/\/projeto\.supabase\.co/);
-
     const respostaConsent = await fetch(`${app.base}/oauth/consent?authorization_id=req-1`, { headers: auth });
     assert.equal(respostaConsent.status, 200);
   } finally { app.limpar(); }
+});
+
+test("reindexa via endpoint Basic interno sem usar credencial humana", async () => {
+  let chamada;
+  const resultado = await reindexarApi({
+    usuario: "leandro",
+    credencialApi: "api",
+    apiUrl: "https://api.exemplo/cognitive-ledger-api",
+    limite: 7,
+    fetchImpl: async (url, opcoes) => {
+      chamada = { url: String(url), opcoes };
+      return new Response(JSON.stringify({ processados: 7, falhas: 0, restantes_estimados: 2 }), {
+        status: 200, headers: { "content-type": "application/json" }
+      });
+    }
+  });
+  assert.equal(chamada.url, "https://api.exemplo/cognitive-ledger-api/admin/reindexar");
+  assert.equal(chamada.opcoes.method, "POST");
+  assert.equal(chamada.opcoes.headers.Authorization, autorizacaoApi);
+  assert.notEqual(chamada.opcoes.headers.Authorization, autorizacaoSite);
+  assert.deepEqual(JSON.parse(chamada.opcoes.body), { limite: 7 });
+  assert.deepEqual(resultado, { processados: 7, falhas: 0, restantes_estimados: 2 });
 });

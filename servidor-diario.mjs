@@ -30,14 +30,18 @@ if (process.env.COGNITIVE_LEDGER_REINDEXAR_NO_STARTUP === "1") {
     let totalProcessados = 0;
     let totalFalhas = 0;
     let restantes = 1;
+    const errosAgregados = {};
     for (let lote = 0; lote < 20 && restantes > 0; lote += 1) {
       const resultado = await reindexarApi({ usuario, credencialApi, apiUrl, limite: 25 });
       totalProcessados += resultado.processados;
       totalFalhas += resultado.falhas;
       restantes = resultado.restantes_estimados;
+      for (const [codigo, quantidade] of Object.entries(resultado.erros || {})) {
+        errosAgregados[codigo] = (errosAgregados[codigo] || 0) + quantidade;
+      }
       if (resultado.processados === 0 && resultado.falhas > 0) break;
     }
-    console.log(`Reindexação de manutenção: ${totalProcessados} processado(s), ${totalFalhas} falha(s), ${restantes} restante(s).`);
+    console.log(`Reindexação de manutenção: ${totalProcessados} processado(s), ${totalFalhas} falha(s), ${restantes} restante(s), erros=${JSON.stringify(errosAgregados)}.`);
   } catch (erro) {
     console.error(`Falha na reindexação de manutenção: ${erro.message}`);
   }

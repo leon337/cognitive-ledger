@@ -1,6 +1,6 @@
 # Cognitive Ledger
 
-**Status:** `FASE 1 — CONTINUIDADE CROSS-CHAT / AGUARDANDO CONFIRMAÇÃO HUMANA DA IDENTIDADE`  
+**Status:** `FASE 1 — CONTINUIDADE CROSS-CHAT / TAREFA 3 OAUTH EM EXECUÇÃO`  
 **Esta é a branch operacional ativa:** `design/cognitive-ledger-foundation`
 
 > **Seu pensamento não deve ficar preso ao chat onde aconteceu.**
@@ -49,12 +49,13 @@ TAREFA ATUAL:
 Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-AGUARDANDO CONFIRMAÇÃO HUMANA DA IDENTIDADE
+EM EXECUÇÃO — PREPARAÇÃO DO OAUTH SERVER
 
 G3 — IDENTIDADE DO PROPRIETÁRIO:
 ✅ decisão recebida
 ✅ identidade criada no Supabase Auth
-🟡 confirmação/login ainda pendente
+✅ confirmação concluída
+✅ login registrado
 
 CRIPTOGRAFIA:
 ✅ JWKS ES256 / P-256
@@ -63,7 +64,7 @@ OAUTH SERVER:
 ❗ desabilitado — feature_disabled
 
 PRÓXIMA AÇÃO:
-proprietário abrir o Magic Link recebido e concluir a confirmação/login.
+alinhar Site URL / Redirect URL e habilitar OAuth Server no Supabase Dashboard.
 ```
 
 O valor da identidade escolhida é privado e **não deve ser versionado no Git público**.
@@ -78,7 +79,7 @@ O valor da identidade escolhida é privado e **não deve ser versionado no Git p
 ✅ Plano de implementação
 ✅ Tarefa 1 — baseline / Deno check exit 0
 ✅ Tarefa 2 — clientes, auditoria e vetores
-◆ Tarefa 3 — OAuth 2.1 / confirmar identidade do proprietário
+◆ Tarefa 3 — OAuth 2.1 / configurar OAuth Server
 ⬜ Tarefa 4 — autorização Bearer por cliente
 ⬜ Tarefa 5 — embeddings
 ⬜ Tarefa 6 — API de recuperação
@@ -88,16 +89,16 @@ O valor da identidade escolhida é privado e **não deve ser versionado no Git p
 ⏸️ Remediação estrutural do Git após validação cross-chat
 ```
 
-### ◆ GATE HUMANO — Confirmar controle da identidade
+### ◆ GATE HUMANO — Configuração do OAuth Server no Supabase Dashboard
 
 **Ação necessária**  
-Abrir o Magic Link enviado pelo Supabase Auth e concluir a confirmação/login.
+Alinhar Site URL/Redirect URL com o domínio privado e habilitar OAuth 2.1 Server com Authorization Path `/oauth/consent`.
 
 **Por que precisa de você**  
-A prova de controle da caixa de e-mail pertence ao proprietário. A equipe não pode clicar nem consumir esse link em seu lugar.
+A interface administrativa disponível nesta execução não expõe essa alteração do projeto hospedado.
 
 **Impacto**  
-A identidade já existe no Auth, mas ainda não pode ser tratada como validada para o OAuth do proprietário.
+OAuth permanece `feature_disabled` e o fluxo authorization code + PKCE não pode ser validado end-to-end enquanto essa configuração não for aplicada.
 
 ## Evidências das Tarefas 1–3
 
@@ -108,7 +109,7 @@ A identidade já existe no Auth, mas ainda não pode ser tratada como validada p
 
 ### Tarefa 2
 
-- migration: [`supabase/migrations/20260821_cross_chat_fase1.sql`](supabase/migrations/20260821_cross_chat_fase1.sql)
+- migration: [`supabase/migrations/20260821_cross_chat_fase1.sql`](supabase/migrations/20260821_cross-chat-fase1.sql)
 - auditoria: [`documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md`](documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md)
 - `vector(1024)` + HNSW + RPC híbrida + RLS + permissions boundary: `VALIDADOS`
 
@@ -118,6 +119,12 @@ A identidade já existe no Auth, mas ainda não pode ser tratada como validada p
 - `mcp/src/oauth.mjs`: versionado;
 - `mcp/public/oauth/consent.html` + `consent.js`: versionados;
 - `mcp/testes/oauth.test.mjs`: `5/5 PASS`;
+- login passwordless + consentimento integrados ao diário privado: commit `c2e322a38677eb0d269eddd019b319575ab981c1`;
+- TDD do servidor: RED `6/8` → GREEN `8/8`; suíte combinada `13/13 PASS`;
+- Render deploy `dep-da4kg9uk1f9s73ekkrpg`: `live`;
+- startup smoke da API: validado; boundary `/login` sem Basic auth: HTTP 401;
+- smoke autenticado das novas rotas: `NÃO VERIFICADO`;
+- identidade confirmada e login registrado no Supabase Auth;
 - JWKS: ES256 / P-256;
 - OAuth Server: `feature_disabled`.
 
@@ -218,8 +225,8 @@ Se a sessão não possuir acesso operacional real, declarar `NÃO DISPONÍVEL / 
 - 02:51 — gates autoexplicativos + sincronização obrigatória do checklist formalizados;
 - Tarefa 1 concluída com `deno check` exit 0;
 - Tarefa 2 concluída e validada;
-- G3 resolvido; identidade criada por Supabase Auth e aguardando confirmação humana;
-- JWKS ES256 confirmado; OAuth Server ainda desabilitado.
+- G3 resolvido; identidade criada e controle confirmado no Supabase Auth;
+- login/consentimento integrados ao diário privado e deployados; JWKS ES256 confirmado; OAuth Server ainda desabilitado.
 
 ## Documentação operacional principal
 

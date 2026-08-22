@@ -836,7 +836,7 @@ Humano e IA devem receber o mesmo estado factual para:
 
 Ao perguntar “por que estamos aqui?”, a IA deve reconstruir a cadeia cronológica relevante.
 
-### A4 — Concapção/Concisão
+### A4 — Concisão
 
 Perguntas simples de estado devem receber respostas curtas e objetivas, sem despejar eventos irrelevantes.
 

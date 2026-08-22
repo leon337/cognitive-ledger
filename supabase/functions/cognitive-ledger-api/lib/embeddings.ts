@@ -52,7 +52,11 @@ export async function gerarEmbedding(
       encoding_format: "float",
     }),
   });
-  if (!resposta.ok) throw new Error(`openai_embedding_http_${resposta.status}`);
+  if (!resposta.ok) {
+    const codigo = `openai_embedding_http_${resposta.status}`;
+    console.error(`embedding_falha:${codigo}`);
+    throw new Error(codigo);
+  }
   const corpo = await resposta.json();
   const embedding = corpo?.data?.[0]?.embedding;
   if (
@@ -79,11 +83,16 @@ export async function indexarEvento(
 ): Promise<void> {
   const evento = await deps.obterEvento(id);
   const embedding = await deps.gerar(textoParaEmbedding(evento));
-  await deps.salvarEmbedding(id, {
-    embedding,
-    embeddingModel: MODELO_EMBEDDING,
-    embeddingAtualizadoEm: new Date().toISOString(),
-  });
+  try {
+    await deps.salvarEmbedding(id, {
+      embedding,
+      embeddingModel: MODELO_EMBEDDING,
+      embeddingAtualizadoEm: new Date().toISOString(),
+    });
+  } catch (erro) {
+    console.error(`embedding_persistencia_falha:${codigoErroIndexacaoSeguro(erro)}`);
+    throw erro;
+  }
 }
 
 export function agendarIndexacaoSemBloquear<T>(
@@ -94,4 +103,14 @@ export function agendarIndexacaoSemBloquear<T>(
   const promessa = Promise.resolve().then(tarefa).catch(() => undefined);
   waitUntil(promessa);
   return resposta;
+}
+
+export function codigoErroIndexacaoSeguro(erro: unknown): string {
+  if (erro instanceof Error) {
+    if (/^openai_embedding_http_\d{3}$/.test(erro.message)) return erro.message;
+    if (["openai_api_key_ausente", "embedding_dimensao_invalida"].includes(erro.message)) return erro.message;
+  }
+  const codigo = (erro as { code?: unknown })?.code;
+  if (typeof codigo === "string" && /^[A-Z0-9_]{2,12}$/.test(codigo)) return `db_${codigo}`;
+  return "erro_indexacao_desconhecido";
 }

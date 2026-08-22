@@ -4,7 +4,6 @@
 
 **Estado atual:** `FASE 1 — CONTINUIDADE CROSS-CHAT / EM EXECUÇÃO`  
 **Branch operacional ativa:** [`design/cognitive-ledger-foundation`](https://github.com/leon337/cognitive-ledger/tree/design/cognitive-ledger-foundation)  
-**Relação atual com a `main`:** a branch operacional está **104 commits à frente** desta linha-base no momento desta atualização.  
 **Natureza da `main`:** entrypoint de continuidade e navegação; a implementação ativa ainda não foi mergeada integralmente aqui.
 
 O Cognitive Ledger é um sistema pessoal de continuidade cognitiva para preservar e recuperar ideias, decisões, aprendizados, hipóteses, projetos e sua evolução ao longo de chats com IA, ferramentas e tempo.
@@ -28,6 +27,8 @@ Na branch operacional já existem, entre outros componentes:
 - especificação e plano aprovados para acesso cross-chat;
 - auditorias, decisões, recomendações, roadmap e runbooks operacionais;
 - documentação do princípio de continuidade e consciência situacional para humanos e IAs.
+
+A branch operacional avançou substancialmente além da linha-base inicial da `main`. Quando a diferença exata de commits for relevante, ela deve ser consultada no GitHub em tempo real, não fixada neste documento.
 
 O estado mutável de deploy/serviços deve sempre ser verificado quando necessário. Este README descreve o **checkpoint documental atual**, não substitui evidência de runtime.
 
@@ -239,7 +240,7 @@ Quando um chat disser que “leu o diário”, deve existir um mecanismo real de
 
 Se você é uma IA ou agente recebendo apenas este repositório como contexto:
 
-1. **Não trate este README antigo ou a `main` como implementação completa.** Esta `main` é a porta de entrada; a branch operacional ativa está indicada acima.
+1. **Não trate a `main` como implementação completa.** Ela é a porta de entrada; a branch operacional ativa está indicada acima.
 2. Leia o roadmap canônico integralmente antes de continuar uma missão relevante.
 3. Identifique `fase`, `tarefa atual`, `bloqueios`, `gates`, `evidências` e `next action`.
 4. Se possuir acesso operacional ao Cognitive Ledger, consulte os Eventos Cognitivos relacionados ao checkpoint.

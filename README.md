@@ -2,7 +2,7 @@
 
 > **START HERE — porta de entrada canônica para humanos e IAs**
 
-**Estado atual:** `FASE 1 — CONTINUIDADE CROSS-CHAT / AGUARDANDO GATE HUMANO`  
+**Estado atual:** `FASE 1 — CONTINUIDADE CROSS-CHAT / TAREFA 3 EM EXECUÇÃO`  
 **Branch operacional ativa:** [`design/cognitive-ledger-foundation`](https://github.com/leon337/cognitive-ledger/tree/design/cognitive-ledger-foundation)  
 **Natureza da `main`:** entrypoint de continuidade e navegação; a implementação ativa ainda não foi mergeada integralmente aqui.
 
@@ -72,7 +72,7 @@ A Fase 1 MCP é deliberadamente **somente leitura**.
 | Plano de implementação cross-chat | ✅ Aprovado |
 | Tarefa 1 — baseline da API | ✅ Concluída / Deno check exit 0 |
 | Tarefa 2 — clientes, auditoria e vetores | ✅ Concluída / validada |
-| Tarefa 3 — OAuth | ◆ Aguardando Gate Humano G3 — identidade do proprietário |
+| Tarefa 3 — OAuth | 🟡 Em execução / G3 resolvido / identidade Auth pendente |
 | Tarefa 4 — autorização por cliente | ⬜ Não iniciada |
 | Tarefa 5 — embeddings | ⬜ Não iniciada |
 | Tarefa 6 — API de recuperação | ⬜ Não iniciada |
@@ -91,11 +91,17 @@ deno check supabase/functions/cognitive-ledger-api/index.ts
 Tarefa 2:
 schema + RLS + vector(1024) + HNSW + RPC híbrida
 → VALIDADO
+
+Tarefa 3:
+G3 — identidade do proprietário
+→ DECISÃO RECEBIDA
+→ valor privado e não versionado
+→ identidade ainda não criada/confirmada no Supabase Auth
 ```
 
 ### Próxima ação
 
-> A execução técnica chegou ao primeiro Gate Humano da Tarefa 3.
+> Criar/confirmar a identidade escolhida pelo mecanismo suportado do Supabase Auth e continuar a preparação do OAuth 2.1, sem inserir usuário diretamente em `auth.users`.
 
 ---
 
@@ -109,7 +115,7 @@ schema + RLS + vector(1024) + HNSW + RPC híbrida
 ✅ Plano de implementação
 ✅ Tarefa 1 — baseline / Deno check
 ✅ Tarefa 2 — clientes, auditoria e vetores
-◆ Tarefa 3 — OAuth 2.1 / Gate Humano G3
+🟡 Tarefa 3 — OAuth 2.1 / G3 resolvido / identidade Auth pendente
 ⬜ Tarefa 4 — autorização Bearer por cliente
 ⬜ Tarefa 5 — embeddings
 ⬜ Tarefa 6 — recuperação cross-chat
@@ -131,16 +137,16 @@ Legenda:
 ◆ gate humano
 ```
 
-### ◆ GATE HUMANO G3 — Identidade do proprietário
+### ✅ GATE HUMANO G3 — Identidade do proprietário
 
 **Decisão necessária**  
-Escolher explicitamente qual endereço de e-mail será a identidade do proprietário no Supabase Auth.
+Resolvida pelo proprietário.
 
-**Por que precisa de você**  
-A identidade que recebe autoridade sobre o Ledger é uma decisão do proprietário. A equipe não deve inferir nem selecionar esse e-mail autonomamente.
+**Estado operacional**  
+A identidade escolhida ainda precisa ser criada/confirmada no Supabase Auth por mecanismo suportado de autenticação.
 
-**Impacto**  
-A Tarefa 3 não pode criar/confirmar a identidade do proprietário nem validar o fluxo OAuth real até essa escolha.
+**Privacidade**  
+O endereço escolhido não é publicado nem versionado neste repositório.
 
 ---
 
@@ -170,8 +176,9 @@ A Tarefa 3 não pode criar/confirmar a identidade do proprietário nem validar o
 - **02:25** — aprendizado por falha de execução: registrar o princípio sem aplicá-lo à `main` não resolve discoverability; nasce o **Bootstrap Test**.
 - **02:38** — correção do bootstrap da `main` confirmada e validada visualmente.
 - **02:51** — descoberta: gates humanos precisam ser autoexplicativos e o checklist deve acompanhar o estado real.
-- **02:xx** — Tarefa 1 fechada com `deno check` exit 0 em checkout temporário autorizado.
-- **02:xx** — Tarefa 2 concluída: clientes, auditoria, `vector(1024)`, HNSW e RPC híbrida validados.
+- Tarefa 1 fechada com `deno check` exit 0 em checkout temporário autorizado.
+- Tarefa 2 concluída: clientes, auditoria, `vector(1024)`, HNSW e RPC híbrida validados.
+- Gate Humano G3 resolvido: identidade do proprietário escolhida; o valor permanece privado e fora do Git.
 
 ---
 
@@ -264,7 +271,7 @@ Partindo somente desta página, um humano ou IA deve conseguir descobrir:
 ✅ source of truth
 ✅ tarefa atual
 ✅ próximo passo
-✅ gate humano atual
+✅ gate humano atual, quando houver
 ✅ instruções de continuidade
 ```
 
@@ -310,13 +317,11 @@ TAREFA ATUAL:
 Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-AGUARDANDO GATE HUMANO
+EM EXECUÇÃO
 
-◆ GATE HUMANO G3:
-Identidade do proprietário
-
-DECISÃO NECESSÁRIA:
-escolher o e-mail que representará o proprietário no Supabase Auth
+G3 — IDENTIDADE DO PROPRIETÁRIO:
+✅ decisão recebida
+🟡 criação/confirmação no Supabase Auth pendente
 
 FONTE OPERACIONAL DO DIÁRIO:
 Supabase/Postgres

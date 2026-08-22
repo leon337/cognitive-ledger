@@ -1,6 +1,6 @@
 # Cognitive Ledger
 
-**Status:** `FASE 1 — CONTINUIDADE CROSS-CHAT / AGUARDANDO GATE HUMANO`  
+**Status:** `FASE 1 — CONTINUIDADE CROSS-CHAT / TAREFA 3 EM EXECUÇÃO`  
 **Esta é a branch operacional ativa:** `design/cognitive-ledger-foundation`
 
 > **Seu pensamento não deve ficar preso ao chat onde aconteceu.**
@@ -12,8 +12,9 @@ O Cognitive Ledger é um sistema pessoal de continuidade cognitiva para preserva
 Se você é humano ou IA retomando este projeto, leia primeiro:
 
 1. [`documentacao/roadmaps/checklist-execucao-cross-chat.md`](documentacao/roadmaps/checklist-execucao-cross-chat.md) — **estado vivo e canônico de progresso**;
-2. [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md) — história, Tarefas 1–9, runbooks e arquitetura detalhada;
-3. [`documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md`](documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md) — bootstrap, timeline, roadmap visual, visão humana e contexto para IA.
+2. [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md) — história, estado, Tarefas 1–9, runbooks, checkpoint e próximo passo;
+3. [`documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md`](documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md) — bootstrap, timeline, roadmap visual, visão humana e contexto para IA;
+4. [`documentacao/auditorias/2026-08-22-falha-bootstrap-main-e-correcao.md`](documentacao/auditorias/2026-08-22-falha-bootstrap-main-e-correcao.md) — erro de discoverability identificado e Bootstrap Test.
 
 ## Fase atual
 
@@ -48,12 +49,18 @@ TAREFA ATUAL:
 Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-AGUARDANDO GATE HUMANO G3
+EM EXECUÇÃO
+
+G3 — IDENTIDADE DO PROPRIETÁRIO:
+✅ decisão recebida
+🟡 identidade ainda não criada/confirmada no Supabase Auth
 
 PRÓXIMA AÇÃO:
-o proprietário escolher explicitamente
-a identidade/e-mail no Supabase Auth
+criar/confirmar a identidade por mecanismo suportado do Supabase Auth
+e continuar a preparação do OAuth 2.1.
 ```
+
+O valor da identidade escolhida é privado e **não deve ser versionado no Git público**.
 
 ## Roadmap visual resumido
 
@@ -65,7 +72,7 @@ a identidade/e-mail no Supabase Auth
 ✅ Plano de implementação
 ✅ Tarefa 1 — baseline / Deno check exit 0
 ✅ Tarefa 2 — clientes, auditoria e vetores
-◆ Tarefa 3 — OAuth 2.1 / Gate Humano G3
+🟡 Tarefa 3 — OAuth 2.1 / G3 resolvido / identidade Auth pendente
 ⬜ Tarefa 4 — autorização Bearer por cliente
 ⬜ Tarefa 5 — embeddings
 ⬜ Tarefa 6 — API de recuperação
@@ -75,16 +82,16 @@ a identidade/e-mail no Supabase Auth
 ⏸️ Remediação estrutural do Git após validação cross-chat
 ```
 
-### ◆ GATE HUMANO G3 — Identidade do proprietário
+### ✅ GATE HUMANO G3 — Identidade do proprietário
 
 **Decisão necessária**  
-Escolher explicitamente qual endereço de e-mail será a identidade do proprietário no Supabase Auth.
+Resolvida pelo proprietário.
 
-**Por que precisa de você**  
-A identidade que recebe autoridade sobre o Ledger é uma decisão do proprietário e não pode ser inferida pela equipe.
+**Estado operacional**  
+A identidade escolhida ainda precisa ser criada/confirmada no Supabase Auth por mecanismo suportado de autenticação. A equipe não fará `INSERT` direto em `auth.users`.
 
-**Impacto**  
-A Tarefa 3 não pode criar/confirmar a identidade do proprietário nem validar o fluxo OAuth real até essa escolha.
+**Privacidade**  
+O endereço escolhido permanece fora do Git público.
 
 ## Evidências das Tarefas 1 e 2
 
@@ -194,8 +201,9 @@ Se a sessão não possuir acesso operacional real, declarar `NÃO DISPONÍVEL / 
 - 02:25 — Bootstrap Test adicionado ao critério de aceite;
 - 02:38 — correção da `main` confirmada visualmente;
 - 02:51 — gates autoexplicativos + sincronização obrigatória do checklist formalizados;
-- 02:xx — Tarefa 1 concluída com `deno check` exit 0;
-- 02:xx — Tarefa 2 concluída e validada.
+- Tarefa 1 concluída com `deno check` exit 0;
+- Tarefa 2 concluída e validada;
+- Gate Humano G3 resolvido; valor da identidade preservado fora do Git.
 
 ## Documentação operacional principal
 

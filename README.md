@@ -2,7 +2,7 @@
 
 > **START HERE — porta de entrada canônica para humanos e IAs**
 
-**Estado atual:** `FASE 1 — CONTINUIDADE CROSS-CHAT / EM EXECUÇÃO`  
+**Estado atual:** `FASE 1 — CONTINUIDADE CROSS-CHAT / AGUARDANDO GATE HUMANO`  
 **Branch operacional ativa:** [`design/cognitive-ledger-foundation`](https://github.com/leon337/cognitive-ledger/tree/design/cognitive-ledger-foundation)  
 **Natureza da `main`:** entrypoint de continuidade e navegação; a implementação ativa ainda não foi mergeada integralmente aqui.
 
@@ -25,7 +25,8 @@ Na branch operacional já existem, entre outros componentes:
 - protótipo público separado dos dados reais;
 - autenticação humana separada da credencial interna Render → API;
 - especificação e plano aprovados para acesso cross-chat;
-- auditorias, decisões, recomendações, roadmap e runbooks operacionais;
+- schema cross-chat com clientes, auditoria e vetores;
+- auditorias, decisões, recomendações, roadmap, checklist vivo e runbooks operacionais;
 - documentação do princípio de continuidade e consciência situacional para humanos e IAs.
 
 A branch operacional avançou substancialmente além da linha-base inicial da `main`. Quando a diferença exata de commits for relevante, ela deve ser consultada no GitHub em tempo real, não fixada neste documento.
@@ -69,9 +70,9 @@ A Fase 1 MCP é deliberadamente **somente leitura**.
 | Separação senha humana × credencial interna | ✅ Implementada |
 | Especificação cross-chat Fase 1 | ✅ Aprovada |
 | Plano de implementação cross-chat | ✅ Aprovado |
-| Tarefa 1 — baseline da API | 🟡 Operacionalmente concluída / verificação Deno pendente |
-| Tarefa 2 — clientes, auditoria e vetores | ⬜ Não iniciada |
-| Tarefa 3 — OAuth | ⬜ Não iniciada |
+| Tarefa 1 — baseline da API | ✅ Concluída / Deno check exit 0 |
+| Tarefa 2 — clientes, auditoria e vetores | ✅ Concluída / validada |
+| Tarefa 3 — OAuth | ◆ Aguardando Gate Humano G3 — identidade do proprietário |
 | Tarefa 4 — autorização por cliente | ⬜ Não iniciada |
 | Tarefa 5 — embeddings | ⬜ Não iniciada |
 | Tarefa 6 — API de recuperação | ⬜ Não iniciada |
@@ -80,19 +81,21 @@ A Fase 1 MCP é deliberadamente **somente leitura**.
 | Tarefa 9 — Testes A/B e auditoria final | ⬜ Não iniciada |
 | Remediação estrutural do histórico público | ⏸️ Adiada por decisão explícita |
 
-### Bloqueio / item não verificado atual
+### Evidência mais recente
 
 ```text
-? deno check supabase/functions/cognitive-ledger-api/index.ts
+Tarefa 1:
+deno check supabase/functions/cognitive-ledger-api/index.ts
+→ EXIT 0
+
+Tarefa 2:
+schema + RLS + vector(1024) + HNSW + RPC híbrida
+→ VALIDADO
 ```
 
-Ainda não há evidência verde suficiente para declarar esse check concluído.
+### Próxima ação
 
-### Próximo passo verificável
-
-> Executar/observar o GitHub Actions com o repositório público temporariamente e obter evidência real de que `deno check supabase/functions/cognitive-ledger-api/index.ts` termina com sucesso.
-
-Depois disso, fechar formalmente a Tarefa 1 e iniciar a Tarefa 2.
+> A execução técnica chegou ao primeiro Gate Humano da Tarefa 3.
 
 ---
 
@@ -104,9 +107,9 @@ Depois disso, fechar formalmente a Tarefa 1 e iniciar a Tarefa 2.
 ✅ Diário privado
 ✅ Especificação cross-chat
 ✅ Plano de implementação
-🟡 Tarefa 1 — baseline / Deno check
-⬜ Tarefa 2 — clientes, auditoria e vetores
-⬜ Tarefa 3 — OAuth 2.1
+✅ Tarefa 1 — baseline / Deno check
+✅ Tarefa 2 — clientes, auditoria e vetores
+◆ Tarefa 3 — OAuth 2.1 / Gate Humano G3
 ⬜ Tarefa 4 — autorização Bearer por cliente
 ⬜ Tarefa 5 — embeddings
 ⬜ Tarefa 6 — recuperação cross-chat
@@ -127,6 +130,17 @@ Legenda:
 ⏸️ adiado
 ◆ gate humano
 ```
+
+### ◆ GATE HUMANO G3 — Identidade do proprietário
+
+**Decisão necessária**  
+Escolher explicitamente qual endereço de e-mail será a identidade do proprietário no Supabase Auth.
+
+**Por que precisa de você**  
+A identidade que recebe autoridade sobre o Ledger é uma decisão do proprietário. A equipe não deve inferir nem selecionar esse e-mail autonomamente.
+
+**Impacto**  
+A Tarefa 3 não pode criar/confirmar a identidade do proprietário nem validar o fluxo OAuth real até essa escolha.
 
 ---
 
@@ -153,54 +167,41 @@ Legenda:
 - **02:11** — aprendizado: a porta de entrada do projeto precisa revelar deterministicamente o estado real.
 - **02:12** — aprendizado: timeline, roadmap visual e estado explícito são necessários para consciência situacional e autonomia de decisão.
 - **02:13** — síntese: todo projeto deve tornar sua continuidade observável para humanos e IAs.
-- **02:25** — novo aprendizado por falha de execução: registrar o princípio sem aplicá-lo à `main` não resolve discoverability; nasce o **Bootstrap Test** como critério de aceite.
+- **02:25** — aprendizado por falha de execução: registrar o princípio sem aplicá-lo à `main` não resolve discoverability; nasce o **Bootstrap Test**.
+- **02:38** — correção do bootstrap da `main` confirmada e validada visualmente.
+- **02:51** — descoberta: gates humanos precisam ser autoexplicativos e o checklist deve acompanhar o estado real.
+- **02:xx** — Tarefa 1 fechada com `deno check` exit 0 em checkout temporário autorizado.
+- **02:xx** — Tarefa 2 concluída: clientes, auditoria, `vector(1024)`, HNSW e RPC híbrida validados.
 
 ---
 
 ## 6. Documentos canônicos — leia nesta ordem
 
-### 1. Roadmap de continuidade cross-chat
+### 1. Checklist vivo de execução
+
+[Checklist Vivo — Execução Cross-Chat](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/roadmaps/checklist-execucao-cross-chat.md)
+
+Este é o **estado canônico de progresso** e deve ser sincronizado depois de cada marco verificável.
+
+### 2. Roadmap de continuidade cross-chat
 
 [Roadmap Canônico — Continuidade Cross-Chat](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md)
 
-Contém:
+Contém história, Tarefas 1–9, runbooks, gates e arquitetura detalhada.
 
-- história do projeto;
-- estado atual;
-- Tarefas 1–9;
-- runbook de gravação;
-- runbook de leitura;
-- gates;
-- checkpoint;
-- instruções de bootstrap para outro chat.
-
-### 2. Princípio de continuidade e consciência situacional
+### 3. Princípio de continuidade e consciência situacional
 
 [Padrão de Continuidade e Consciência Situacional de Projetos](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md)
 
-Registra:
+### 4. Auditorias das Tarefas 1 e 2
 
-- bootstrap/discoverability;
-- timeline;
-- roadmap visual;
-- estado atual;
-- decisão/gates;
-- visão humana;
-- contexto estruturado para IA.
+- [Tarefa 1 — Baseline Cross-Chat](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/auditorias/2026-08-21-tarefa-1-baseline-cross-chat.md)
+- [Tarefa 2 — Schema Cross-Chat](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md)
 
-### 3. Auditoria da falha de bootstrap da `main`
+### 5. Especificação e plano
 
-[Falha de Bootstrap da main e Correção do Critério de Continuidade](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/auditorias/2026-08-22-falha-bootstrap-main-e-correcao.md)
-
-Registra o erro de execução, o aprendizado e o **Bootstrap Test**.
-
-### 4. Especificação da Fase 1
-
-[Especificação — Acesso Cross-Chat Fase 1](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/especificacoes/2026-08-21-acesso-cross-chat-fase-1.md)
-
-### 5. Plano de implementação
-
-[Plano — Acesso Cross-Chat Fase 1](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/planos/2026-08-21-acesso-cross-chat-fase-1.md)
+- [Especificação — Acesso Cross-Chat Fase 1](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/especificacoes/2026-08-21-acesso-cross-chat-fase-1.md)
+- [Plano — Acesso Cross-Chat Fase 1](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/planos/2026-08-21-acesso-cross-chat-fase-1.md)
 
 ---
 
@@ -227,12 +228,11 @@ Quando um chat disser que “leu o diário”, deve existir um mecanismo real de
 ## 8. Como um humano deve continuar o projeto
 
 1. Comece por este README.
-2. Abra a branch [`design/cognitive-ledger-foundation`](https://github.com/leon337/cognitive-ledger/tree/design/cognitive-ledger-foundation).
-3. Leia o [Roadmap Canônico](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md).
-4. Localize o checkpoint atual.
-5. Confirme o item `NÃO VERIFICADO` antes de avançar.
-6. Execute o próximo passo verificável.
-7. Não reabra frentes adiadas sem novo gate humano.
+2. Abra o [Checklist Vivo](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/roadmaps/checklist-execucao-cross-chat.md).
+3. Abra a branch [`design/cognitive-ledger-foundation`](https://github.com/leon337/cognitive-ledger/tree/design/cognitive-ledger-foundation).
+4. Leia o roadmap detalhado quando precisar do contexto completo.
+5. Se houver `◆ GATE HUMANO`, leia decisão necessária, motivo e impacto antes de responder.
+6. Não reabra frentes adiadas sem novo gate humano.
 
 ---
 
@@ -241,14 +241,15 @@ Quando um chat disser que “leu o diário”, deve existir um mecanismo real de
 Se você é uma IA ou agente recebendo apenas este repositório como contexto:
 
 1. **Não trate a `main` como implementação completa.** Ela é a porta de entrada; a branch operacional ativa está indicada acima.
-2. Leia o roadmap canônico integralmente antes de continuar uma missão relevante.
-3. Identifique `fase`, `tarefa atual`, `bloqueios`, `gates`, `evidências` e `next action`.
-4. Se possuir acesso operacional ao Cognitive Ledger, consulte os Eventos Cognitivos relacionados ao checkpoint.
-5. Se **não** possuir acesso operacional ao Ledger, declare `NÃO DISPONÍVEL / NÃO VERIFICADO` e não finja ter consultado o diário.
-6. Preserve a distinção entre **memória recuperada** e **análise nova**.
-7. Não transforme ausência de evidência em conclusão.
-8. Não execute rewrite, force-push destrutivo, migração do MCP para VPS ou escrita cross-chat sem autorização correspondente.
-9. Continue do próximo passo verificável, não da primeira tarefa do projeto.
+2. Leia primeiro o **Checklist Vivo** e use-o como estado canônico de progresso.
+3. Use o roadmap detalhado para arquitetura, runbooks e histórico ampliado.
+4. Identifique `fase`, `tarefa atual`, `bloqueios`, `gates`, `evidências` e `next action`.
+5. Se possuir acesso operacional ao Cognitive Ledger, consulte os Eventos Cognitivos relacionados ao checkpoint.
+6. Se **não** possuir acesso operacional ao Ledger, declare `NÃO DISPONÍVEL / NÃO VERIFICADO` e não finja ter consultado o diário.
+7. Preserve a distinção entre **memória recuperada** e **análise nova**.
+8. Não transforme ausência de evidência em conclusão.
+9. Nunca apresente um gate somente pelo código; inclua nome humano, decisão necessária, motivo e impacto.
+10. Depois de cada marco verificável, sincronize checklist/checkpoint antes de declarar progresso concluído.
 
 ### Bootstrap Test
 
@@ -257,17 +258,15 @@ Partindo somente desta página, um humano ou IA deve conseguir descobrir:
 ```text
 ✅ estado atual
 ✅ branch operacional
+✅ checklist vivo
 ✅ roadmap
 ✅ timeline / checkpoint
 ✅ source of truth
 ✅ tarefa atual
-✅ item não verificado
 ✅ próximo passo
-✅ gates / decisões adiadas
+✅ gate humano atual
 ✅ instruções de continuidade
 ```
-
-Se qualquer um desses elementos não puder ser encontrado a partir da `main`, a continuidade do projeto deve ser considerada **incompleta**.
 
 ---
 
@@ -275,17 +274,7 @@ Se qualquer um desses elementos não puder ser encontrado a partir da `main`, a 
 
 O repositório está **público temporariamente** por decisão operacional para permitir continuidade das validações de CI.
 
-Isso **não** autoriza publicação de:
-
-- diário canônico privado;
-- fontes brutas pessoais;
-- senhas;
-- tokens;
-- API keys;
-- secrets;
-- connection strings reais;
-- verificadores de autenticação;
-- dumps ou snapshots privados.
+Isso **não** autoriza publicação de diário canônico privado, fontes brutas pessoais, senhas, tokens, API keys, secrets, connection strings reais, verificadores de autenticação, dumps ou snapshots privados.
 
 Novos registros cognitivos reais devem permanecer no armazenamento privado operacional.
 
@@ -297,9 +286,7 @@ A remediação estrutural do histórico público está **adiada, não resolvida*
 
 O Cognitive Ledger e o MCF continuam sendo projetos distintos.
 
-O princípio de continuidade e consciência situacional foi identificado como **transversal** e deverá ser planejado futuramente também para o MCF, permitindo que o MESTRE recupere estado, roadmap, timeline, decisões, gates e evidências antes de orquestrar missões relacionadas a projetos existentes.
-
-Essa integração ainda **não foi implementada**.
+O princípio de continuidade e consciência situacional foi identificado como transversal e deverá ser planejado futuramente também para o MCF. Essa integração ainda **não foi implementada**.
 
 ---
 
@@ -315,17 +302,21 @@ Fase 1 — Continuidade Cross-Chat
 BRANCH OPERACIONAL:
 design/cognitive-ledger-foundation
 
-TAREFA ATUAL:
+TAREFAS CONCLUÍDAS:
 Tarefa 1 — baseline da API
+Tarefa 2 — clientes, auditoria e vetores
+
+TAREFA ATUAL:
+Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-operacionalmente concluída / Deno check não comprovado
+AGUARDANDO GATE HUMANO
 
-PRÓXIMO PASSO:
-obter evidência real do deno check via CI
+◆ GATE HUMANO G3:
+Identidade do proprietário
 
-DEPOIS:
-Tarefa 2 — clientes, auditoria e vetores
+DECISÃO NECESSÁRIA:
+escolher o e-mail que representará o proprietário no Supabase Auth
 
 FONTE OPERACIONAL DO DIÁRIO:
 Supabase/Postgres

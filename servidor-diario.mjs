@@ -8,9 +8,11 @@ const pastaPublica = path.join(raiz, ".gerado", "site-privado");
 const usuario = process.env.COGNITIVE_LEDGER_USUARIO;
 const credencialApi = process.env.COGNITIVE_LEDGER_SENHA;
 const apiUrl = process.env.COGNITIVE_LEDGER_API_URL;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
 const porta = Number(process.env.PORT || 10000);
 
-if (!usuario || !credencialApi || !apiUrl) {
+if (!usuario || !credencialApi || !apiUrl || !supabaseUrl || !supabasePublishableKey) {
   console.error("Configuração obrigatória do Cognitive Ledger ausente.");
   process.exit(1);
 }
@@ -23,7 +25,9 @@ try {
   process.exit(1);
 }
 
-const servidor = criarServidor({ pastaPublica, usuario, validarAcesso, credencialApi, apiUrl });
+const servidor = criarServidor({
+  pastaPublica, usuario, validarAcesso, credencialApi, apiUrl, supabaseUrl, supabasePublishableKey
+});
 
 servidor.listen(porta, "0.0.0.0", () => {
   console.log(`Cognitive Ledger privado disponível na porta ${porta}.`);

@@ -45,15 +45,22 @@ function criarAutorizacao(usuario, valor) {
   return `Basic ${Buffer.from(`${usuario}:${valor}`).toString("base64")}`;
 }
 
-function headersPrivados(extra = {}) {
+const cspPrivada = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+
+function headersPrivados(extra = {}, csp = cspPrivada) {
   return {
     "Cache-Control": "no-store, private",
     "X-Robots-Tag": "noindex, nofollow, noarchive",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "no-referrer",
-    "Content-Security-Policy": "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    "Content-Security-Policy": csp,
     ...extra
   };
+}
+
+function headersOAuth(supabaseOrigin, extra = {}) {
+  const csp = `default-src 'self'; style-src 'self'; script-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' ${supabaseOrigin}; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`;
+  return headersPrivados(extra, csp);
 }
 
 function responderNaoAutorizado(res) {
@@ -90,12 +97,20 @@ export async function verificarApi({ usuario, credencialApi, apiUrl, fetchImpl =
   return { status: resposta.status, total: dados.registros.length };
 }
 
-export function criarServidor({ pastaPublica, usuario, validarAcesso, credencialApi, apiUrl, fetchImpl = fetch }) {
-  if (!pastaPublica || !usuario || typeof validarAcesso !== "function" || !credencialApi || !apiUrl) {
+export function criarServidor({ pastaPublica, usuario, validarAcesso, credencialApi, apiUrl, supabaseUrl, supabasePublishableKey, fetchImpl = fetch }) {
+  if (!pastaPublica || !usuario || typeof validarAcesso !== "function" || !credencialApi || !apiUrl || !supabaseUrl || !supabasePublishableKey) {
     throw new Error("configuração obrigatória do servidor ausente");
   }
   const apiBase = apiUrl.replace(/\/+$/, "");
   const authorizationApi = criarAutorizacao(usuario, credencialApi);
+  const supabase = new URL(supabaseUrl);
+  if (supabase.protocol !== "https:") throw new Error("SUPABASE_URL_HTTPS_OBRIGATORIA");
+  const supabaseBase = supabase.toString().replace(/\/$/, "");
+  const supabaseOrigin = supabase.origin;
+  const configOAuth = `globalThis.COGNITIVE_LEDGER_OAUTH_CONFIG = Object.freeze(${JSON.stringify({
+    supabaseUrl: supabaseBase,
+    publishableKey: supabasePublishableKey
+  })});\n`;
 
   return http.createServer(async (req, res) => {
     if (!autorizado(req, usuario, validarAcesso)) {
@@ -104,6 +119,17 @@ export function criarServidor({ pastaPublica, usuario, validarAcesso, credencial
     }
 
     const url = new URL(req.url || "/", "http://localhost");
+
+    if (url.pathname === "/oauth/config.js") {
+      if (req.method !== "GET") {
+        res.writeHead(405, headersOAuth(supabaseOrigin, { "Content-Type": "text/plain; charset=utf-8", Allow: "GET" }));
+        res.end("Método não permitido.");
+        return;
+      }
+      res.writeHead(200, headersOAuth(supabaseOrigin, { "Content-Type": "application/javascript; charset=utf-8" }));
+      res.end(configOAuth);
+      return;
+    }
 
     if (url.pathname === "/api/timeline" || url.pathname === "/api/registros") {
       const rotaTimeline = url.pathname === "/api/timeline";
@@ -143,22 +169,28 @@ export function criarServidor({ pastaPublica, usuario, validarAcesso, credencial
 
     let relativo = decodeURIComponent(url.pathname);
     if (relativo === "/") relativo = "/index.html";
+    if (relativo === "/login") relativo = "/login.html";
+    if (relativo === "/oauth/consent" || relativo === "/oauth/consent/") relativo = "/oauth/consent.html";
+    const rotaOAuth = relativo === "/login.html" || relativo.startsWith("/oauth/");
+    const headersEstaticos = (extra = {}) => rotaOAuth
+      ? headersOAuth(supabaseOrigin, extra)
+      : headersPrivados(extra);
     const seguro = path.normalize(relativo).replace(/^([/\\])+/, "");
     const arquivo = path.join(pastaPublica, seguro);
 
     if (!arquivo.startsWith(pastaPublica + path.sep) && arquivo !== path.join(pastaPublica, "index.html")) {
-      res.writeHead(403, headersPrivados({ "Content-Type": "text/plain; charset=utf-8" }));
+      res.writeHead(403, headersEstaticos({ "Content-Type": "text/plain; charset=utf-8" }));
       res.end("Acesso negado.");
       return;
     }
 
     if (!fs.existsSync(arquivo) || !fs.statSync(arquivo).isFile()) {
-      res.writeHead(404, headersPrivados({ "Content-Type": "text/plain; charset=utf-8" }));
+      res.writeHead(404, headersEstaticos({ "Content-Type": "text/plain; charset=utf-8" }));
       res.end("Não encontrado.");
       return;
     }
 
-    res.writeHead(200, headersPrivados({
+    res.writeHead(200, headersEstaticos({
       "Content-Type": tipos[path.extname(arquivo).toLowerCase()] || "application/octet-stream"
     }));
     fs.createReadStream(arquivo).pipe(res);

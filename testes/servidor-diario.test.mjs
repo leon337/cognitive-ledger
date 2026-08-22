@@ -13,12 +13,17 @@ const autorizacaoApi = basic("leandro", "api");
 async function iniciar(opcoes = {}) {
   const pasta = fs.mkdtempSync(path.join(os.tmpdir(), "cognitive-ledger-"));
   fs.writeFileSync(path.join(pasta, "index.html"), "<h1>ok</h1>");
+  fs.writeFileSync(path.join(pasta, "login.html"), "<h1>login</h1>");
+  fs.mkdirSync(path.join(pasta, "oauth"), { recursive: true });
+  fs.writeFileSync(path.join(pasta, "oauth", "consent.html"), "<h1>consent</h1>");
   const servidor = criarServidor({
     pastaPublica: pasta,
     usuario: "leandro",
     validarAcesso: valor => valor === "site",
     credencialApi: "api",
     apiUrl: "https://api.exemplo/cognitive-ledger-api",
+    supabaseUrl: "https://projeto.supabase.co",
+    supabasePublishableKey: "public-test-key",
     ...opcoes
   });
   servidor.listen(0, "127.0.0.1");
@@ -110,4 +115,33 @@ test("verificação de API falha quando upstream não autentica", async () => {
     }),
     /API indisponível ou não autorizada: 401/
   );
+});
+
+
+test("serve configuração OAuth em runtime sem vazar credencial interna", async () => {
+  const app = await iniciar();
+  try {
+    const resposta = await fetch(`${app.base}/oauth/config.js`, { headers: { Authorization: autorizacaoSite } });
+    assert.equal(resposta.status, 200);
+    const corpo = await resposta.text();
+    assert.match(corpo, /https:\/\/projeto\.supabase\.co/);
+    assert.match(corpo, /public-test-key/);
+    assert.doesNotMatch(corpo, /api/);
+    assert.equal(resposta.headers.get("cache-control"), "no-store, private");
+  } finally { app.limpar(); }
+});
+
+test("mapeia rotas limpas de login e consentimento e aplica CSP OAuth restrita", async () => {
+  const app = await iniciar();
+  try {
+    const auth = { Authorization: autorizacaoSite };
+    const respostaLogin = await fetch(`${app.base}/login`, { headers: auth });
+    assert.equal(respostaLogin.status, 200);
+    const csp = respostaLogin.headers.get("content-security-policy") || "";
+    assert.match(csp, /https:\/\/cdn\.jsdelivr\.net/);
+    assert.match(csp, /https:\/\/projeto\.supabase\.co/);
+
+    const respostaConsent = await fetch(`${app.base}/oauth/consent?authorization_id=req-1`, { headers: auth });
+    assert.equal(respostaConsent.status, 200);
+  } finally { app.limpar(); }
 });

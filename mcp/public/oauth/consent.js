@@ -1,4 +1,4 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/+esm';
 
 const config = globalThis.COGNITIVE_LEDGER_OAUTH_CONFIG;
 const estado = document.querySelector('#estado');

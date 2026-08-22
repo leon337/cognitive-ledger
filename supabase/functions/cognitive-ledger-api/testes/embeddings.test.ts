@@ -1,6 +1,7 @@
 import { assertEquals, assertRejects } from "jsr:@std/assert";
 import {
   gerarEmbedding,
+  codigoErroIndexacaoSeguro,
   indexarEvento,
   MODELO_EMBEDDING,
   textoParaEmbedding,
@@ -105,4 +106,10 @@ Deno.test("falha de indexação pode ser absorvida sem alterar resultado da grav
   assertEquals(devolvida, resposta);
   await Promise.allSettled(tarefas);
   assertEquals(tarefas.length, 1);
+});
+
+Deno.test("normaliza erro de indexação sem expor conteúdo", () => {
+  assertEquals(codigoErroIndexacaoSeguro(new Error("openai_embedding_http_401")), "openai_embedding_http_401");
+  assertEquals(codigoErroIndexacaoSeguro({ code: "22P02", message: "sensível" }), "db_22P02");
+  assertEquals(codigoErroIndexacaoSeguro(new Error("detalhe potencialmente sensível")), "erro_indexacao_desconhecido");
 });

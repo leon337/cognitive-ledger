@@ -1,6 +1,6 @@
 # Cognitive Ledger
 
-**Status:** `FASE 1 — CONTINUIDADE CROSS-CHAT / TAREFA 5 AGUARDANDO G4`  
+**Status:** `FASE 1 — CONTINUIDADE CROSS-CHAT / TAREFA 5 BLOQUEADA POR SALDO OPENAI`  
 **Branch operacional ativa:** `design/cognitive-ledger-foundation`
 
 > **Seu pensamento não deve ficar preso ao chat onde aconteceu.**
@@ -13,7 +13,7 @@ Leia nesta ordem:
 
 1. [`documentacao/roadmaps/checklist-execucao-cross-chat.md`](documentacao/roadmaps/checklist-execucao-cross-chat.md) — estado vivo e canônico;
 2. [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md) — roadmap, arquitetura e runbooks;
-3. [`documentacao/auditorias/2026-08-22-tarefa-4-autorizacao-bearer-auditoria.md`](documentacao/auditorias/2026-08-22-tarefa-4-autorizacao-bearer-auditoria.md) — evidência mais recente;
+3. [`documentacao/auditorias/2026-08-22-tarefa-5-embeddings-bloqueio-credito.md`](documentacao/auditorias/2026-08-22-tarefa-5-embeddings-bloqueio-credito.md) — evidência mais recente;
 4. [`documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md`](documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md) — princípios de bootstrap, timeline e roadmap visual.
 
 ## Fase atual
@@ -44,8 +44,8 @@ A Fase 1 MCP é **somente leitura**.
 ✅ Tarefa 1 — baseline da API / deno check exit 0
 ✅ Tarefa 2 — clientes, auditoria e vetores
 ✅ Tarefa 3 — OAuth 2.1 do proprietário / G2 PASS end-to-end
-✅ Tarefa 4 — Bearer por cliente + auditoria fail-closed / GREEN 9/9
-◆ Tarefa 5 — embeddings / AGUARDANDO GATE HUMANO G4
+✅ Tarefa 4 — Bearer por cliente + auditoria fail-closed
+❗ Tarefa 5 — embeddings / BACKFILL BLOQUEADO POR SALDO OPENAI
 ⬜ Tarefa 6 — API de recuperação
 ⬜ Tarefa 7 — MCP remoto
 ⬜ Tarefa 8 — deploy + ChatGPT
@@ -55,33 +55,33 @@ A Fase 1 MCP é **somente leitura**.
 ### Evidência mais recente
 
 ```text
-G2 OAuth:
-authorization code exchange ✅
-client_id no token         ✅
-issuer/audience             ✅
-UserInfo                    ✅
-refresh token               ✅
-UserInfo após refresh       ✅
-
-Tarefa 4:
-RED    1 PASS / 7 FAIL
-GREEN  9 PASS / 0 FAIL
-deno check index.ts         ✅
-Node OAuth/servidor 13/13   ✅
+Tarefa 5:
+G4 / OPENAI_API_KEY             ✅ resolvido
+text-embedding-3-large / 1024   ✅ implementado
+indexação sem bloquear gravação ✅
+/admin/reindexar Basic-only     ✅
+Edge Function v6                ✅ ACTIVE
+Deno após instrumentação        ✅ 15/15
+executor privado Node           ✅ 9/9
+backfill real                   ❌ 0/25
+causa                           ✅ openai_embedding_http_429_credit_balance_exhausted
+executor automático             ✅ desligado após diagnóstico
 ```
 
-A nova boundary Bearer está **implementada e testada no código**, mas a Edge Function de produção ainda não foi redeployada com essa versão. O runtime deve permanecer marcado como `NÃO IMPLANTADO` até evidência de deploy.
+A boundary Bearer da Tarefa 4 está incluída na Edge Function atualmente implantada.
 
-## ◆ GATE HUMANO G4 — Configurar chave da OpenAI para embeddings
+## ◆ GATE HUMANO — Saldo/crédito da OpenAI API
 
 **Ação necessária**  
-Disponibilizar uma `OPENAI_API_KEY` válida para o ambiente da Supabase Edge Function por canal seguro. A chave não deve ser enviada em mensagem, commit, arquivo público, log ou screenshot.
+Disponibilizar saldo/crédito utilizável para a conta/projeto OpenAI associado à chave configurada no Supabase.
 
 **Por que precisa de você**  
-A Tarefa 5 precisa chamar a API de embeddings da OpenAI e envolve uma credencial com autoridade e potencial impacto de cobrança.
+A API respondeu `credit_balance_exhausted`. Alterar billing, forma de pagamento ou aquisição de créditos é uma decisão financeira do proprietário.
 
 **Impacto**  
-Sem a chave, não é possível validar embeddings reais, fazer backfill do corpus nem aprovar o caminho semântico da Fase 1.
+Sem saldo, o código está implementado e testado, mas não é possível gerar embeddings reais, concluir o backfill e fechar a Tarefa 5.
+
+Depois da resolução, a execução deve retomar automaticamente: reativar backfill → validar 100% do corpus → desligar manutenção → fechar Tarefa 5 → iniciar Tarefa 6.
 
 ## Fonte operacional de verdade
 

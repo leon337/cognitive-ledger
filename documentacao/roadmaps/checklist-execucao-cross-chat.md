@@ -28,10 +28,18 @@ TAREFA ATUAL:
 Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-PARADA NO PRIMEIRO GATE HUMANO
+EM EXECUÇÃO
 
-PRÓXIMA AÇÃO:
-usuário escolher a identidade/e-mail do proprietário no Supabase Auth
+GATE G3:
+✅ decisão do proprietário recebida
+
+PENDÊNCIA OPERACIONAL ATUAL:
+criar/confirmar a identidade escolhida no Supabase Auth
+por mecanismo suportado de Auth; nenhuma identidade foi criada por SQL direto.
+
+OBSERVAÇÃO:
+a tentativa automatizada de disparar Magic Link não alcançou o Auth
+por indisponibilidade do transporte remoto da sessão.
 ```
 
 ## Roadmap sincronizado
@@ -66,8 +74,9 @@ usuário escolher a identidade/e-mail do proprietário no Supabase Auth
   - ✅ `service_role` autorizado
   - ✅ Security Advisor sem WARN/ERROR novos
   - ✅ migration versionada
-- ◆ Tarefa 3 — OAuth 2.1 do proprietário
-  - ◆ **GATE HUMANO G3 — Identidade do proprietário**
+- 🟡 Tarefa 3 — OAuth 2.1 do proprietário
+  - ✅ **GATE HUMANO G3 — Identidade do proprietário: decisão recebida**
+  - 🟡 criar/confirmar identidade no Supabase Auth — pendente operacional
   - ⬜ assinatura assimétrica/JWKS
   - ⬜ OAuth Server
   - ⬜ consentimento
@@ -93,16 +102,27 @@ usuário escolher a identidade/e-mail do proprietário no Supabase Auth
 - commit da migration: `73fb5fce12e330d04d45e39577172a2592c1903e`
 - auditoria: `documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md`
 
-## ◆ GATE HUMANO G3 — Identidade do proprietário
+### Tarefa 3 — G3
 
-**Decisão necessária**  
-Escolher explicitamente qual endereço de e-mail será a identidade do proprietário no Supabase Auth.
+- decisão do proprietário: `RECEBIDA`;
+- valor da identidade: **não versionado neste repositório público**;
+- consulta operacional ao Supabase Auth: identidade ainda inexistente antes da criação;
+- política: criar/confirmar somente por mecanismo suportado de Supabase Auth, nunca por `INSERT` direto em `auth.users`.
 
-**Por que precisa de você**  
-A identidade que recebe autoridade sobre o Ledger é uma decisão de autoridade do proprietário. A equipe não deve inferir nem selecionar esse e-mail autonomamente.
+## Gate G3 — estado
 
-**Impacto**  
-A Tarefa 3 não pode criar/confirmar a identidade do proprietário nem validar o fluxo OAuth real até essa escolha.
+```text
+✅ GATE HUMANO G3 — Identidade do proprietário
+
+DECISÃO NECESSÁRIA:
+resolvida pelo proprietário.
+
+ESTADO OPERACIONAL:
+a identidade ainda precisa ser criada/confirmada no Supabase Auth.
+
+PRIVACIDADE:
+o endereço escolhido não entra no Git público.
+```
 
 ## Regra obrigatória de sincronização
 

@@ -49,7 +49,7 @@ TAREFA ATUAL:
 Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-EM EXECUÇÃO — PREPARAÇÃO DO OAUTH SERVER
+EM EXECUÇÃO — G2 PROBE AUTHORIZATION CODE + PKCE
 
 G3 — IDENTIDADE DO PROPRIETÁRIO:
 ✅ decisão recebida
@@ -61,10 +61,17 @@ CRIPTOGRAFIA:
 ✅ JWKS ES256 / P-256
 
 OAUTH SERVER:
-❗ desabilitado — feature_disabled
+✅ habilitado
+✅ Site URL no domínio privado
+✅ Redirect URL /oauth/consent
+✅ Authorization Path /oauth/consent
+✅ Dynamic OAuth Apps habilitado
+✅ discovery HTTP 200
+✅ dynamic registration HTTP 201
+✅ authorize → /oauth/consent com authorization_id
 
 PRÓXIMA AÇÃO:
-alinhar Site URL / Redirect URL e habilitar OAuth Server no Supabase Dashboard.
+proprietário aprovar o cliente OAuth de teste para concluir o G2 probe.
 ```
 
 O valor da identidade escolhida é privado e **não deve ser versionado no Git público**.
@@ -79,7 +86,7 @@ O valor da identidade escolhida é privado e **não deve ser versionado no Git p
 ✅ Plano de implementação
 ✅ Tarefa 1 — baseline / Deno check exit 0
 ✅ Tarefa 2 — clientes, auditoria e vetores
-◆ Tarefa 3 — OAuth 2.1 / configurar OAuth Server
+🟡 Tarefa 3 — OAuth 2.1 / G2 probe
 ⬜ Tarefa 4 — autorização Bearer por cliente
 ⬜ Tarefa 5 — embeddings
 ⬜ Tarefa 6 — API de recuperação
@@ -89,16 +96,19 @@ O valor da identidade escolhida é privado e **não deve ser versionado no Git p
 ⏸️ Remediação estrutural do Git após validação cross-chat
 ```
 
-### ◆ GATE HUMANO — Configuração do OAuth Server no Supabase Dashboard
+### ◆ GATE HUMANO G2 PROBE — Autorizar cliente OAuth de teste
 
 **Ação necessária**  
-Alinhar Site URL/Redirect URL com o domínio privado e habilitar OAuth 2.1 Server com Authorization Path `/oauth/consent`.
+Abrir a solicitação OAuth de teste, autenticar-se se solicitado e aprovar o cliente `Cognitive Ledger MCP G2 Probe`.
 
 **Por que precisa de você**  
-A interface administrativa disponível nesta execução não expõe essa alteração do projeto hospedado.
+OAuth exige consentimento explícito do proprietário. A equipe não deve aprovar acesso em seu nome.
 
 **Impacto**  
-OAuth permanece `feature_disabled` e o fluxo authorization code + PKCE não pode ser validado end-to-end enquanto essa configuração não for aplicada.
+Sem essa aprovação, não é possível provar end-to-end a emissão do authorization code, troca PKCE por access/refresh token e presença de `client_id` no token.
+
+**Segurança**  
+O callback do probe usa túnel HTTPS temporário e troca o código automaticamente. Não enviar authorization code, access token ou refresh token para a conversa.
 
 ## Evidências das Tarefas 1–3
 
@@ -109,7 +119,7 @@ OAuth permanece `feature_disabled` e o fluxo authorization code + PKCE não pode
 
 ### Tarefa 2
 
-- migration: [`supabase/migrations/20260821_cross_chat_fase1.sql`](supabase/migrations/20260821_cross_chat_fase1.sql)
+- migration: [`supabase/migrations/20260821_cross-chat-fase1.sql`](supabase/migrations/20260821_cross-chat-fase1.sql)
 - auditoria: [`documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md`](documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md)
 - `vector(1024)` + HNSW + RPC híbrida + RLS + permissions boundary: `VALIDADOS`
 
@@ -118,15 +128,15 @@ OAuth permanece `feature_disabled` e o fluxo authorization code + PKCE não pode
 - auditoria: [`documentacao/auditorias/2026-08-22-tarefa-3-oauth-parcial.md`](documentacao/auditorias/2026-08-22-tarefa-3-oauth-parcial.md)
 - `mcp/src/oauth.mjs`: versionado;
 - `mcp/public/oauth/consent.html` + `consent.js`: versionados;
-- `mcp/testes/oauth.test.mjs`: `5/5 PASS`;
-- login passwordless + consentimento integrados ao diário privado: commit `c2e322a38677eb0d269eddd019b319575ab981c1`;
+- login passwordless + consentimento integrados ao diário privado;
 - TDD do servidor: RED `6/8` → GREEN `8/8`; suíte combinada `13/13 PASS`;
-- Render deploy `dep-da4kg9uk1f9s73ekkrpg`: `live`;
-- startup smoke da API: validado; boundary `/login` sem Basic auth: HTTP 401;
-- smoke autenticado das novas rotas: `NÃO VERIFICADO`;
+- Render deploy privado: `live`;
 - identidade confirmada e login registrado no Supabase Auth;
 - JWKS: ES256 / P-256;
-- OAuth Server: `feature_disabled`.
+- OAuth Server: habilitado;
+- OAuth discovery: HTTP 200;
+- dynamic client registration: HTTP 201;
+- authorization request válida: HTTP 302 para `/oauth/consent` com `authorization_id`.
 
 ## Modelo central
 
@@ -226,7 +236,9 @@ Se a sessão não possuir acesso operacional real, declarar `NÃO DISPONÍVEL / 
 - Tarefa 1 concluída com `deno check` exit 0;
 - Tarefa 2 concluída e validada;
 - G3 resolvido; identidade criada e controle confirmado no Supabase Auth;
-- login/consentimento integrados ao diário privado e deployados; JWKS ES256 confirmado; OAuth Server ainda desabilitado.
+- Site URL/Redirect URL alinhadas ao domínio privado;
+- OAuth Server e Dynamic OAuth Apps habilitados;
+- discovery, dynamic registration e authorize→consent validados.
 
 ## Documentação operacional principal
 

@@ -28,7 +28,7 @@ TAREFA ATUAL:
 Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-EM EXECUÇÃO — PREPARAÇÃO DO OAUTH SERVER
+EM EXECUÇÃO — G2 PROBE DE AUTHORIZATION CODE + PKCE
 
 GATE G3:
 ✅ decisão do proprietário recebida
@@ -39,8 +39,18 @@ IDENTIDADE NO SUPABASE AUTH:
 ✅ e-mail confirmado
 ✅ login registrado
 
+OAUTH SERVER:
+✅ Site URL alinhada ao domínio privado
+✅ Redirect URL /oauth/consent permitida
+✅ OAuth 2.1 Server habilitado
+✅ Authorization Path /oauth/consent
+✅ Dynamic OAuth Apps habilitado
+✅ discovery HTTP 200
+✅ registro dinâmico HTTP 201
+✅ /oauth/authorize → HTTP 302 para /oauth/consent com authorization_id
+
 PRÓXIMA AÇÃO:
-configurar Site URL / Redirect URL e habilitar OAuth Server + Authorization Path no Supabase Dashboard.
+executar o G2 probe real; o proprietário precisa autenticar-se/autorizar o cliente OAuth de teste na tela de consentimento.
 ```
 
 ## Roadmap sincronizado
@@ -90,13 +100,21 @@ configurar Site URL / Redirect URL e habilitar OAuth Server + Authorization Path
   - ✅ deploy Render `dep-da4kg9uk1f9s73ekkrpg` → `live`
   - ✅ startup smoke: API operacional validada / serviço ativo
   - ✅ boundary HTTP Basic preservada (`/login` sem credencial → HTTP 401)
-  - ❓ smoke autenticado de `/login` e `/oauth/consent`: NÃO VERIFICADO
-  - ❗ OAuth Server ainda desabilitado (`404 feature_disabled`)
-  - ◆ **GATE HUMANO — Configuração do OAuth Server no Supabase Dashboard**
-  - ⬜ alinhar Site URL + Redirect URL
-  - ⬜ habilitar OAuth Server + Authorization Path
-  - ⬜ habilitar/validar registro dinâmico para MCP
-  - ⬜ validação real do fluxo authorization code + PKCE
+  - ❓ smoke autenticado de `/login` e `/oauth/consent`: ainda depende do fluxo real
+  - ✅ Site URL alterada de localhost para o domínio privado do diário
+  - ✅ Redirect URL exata `/oauth/consent` cadastrada
+  - ✅ OAuth Server habilitado
+  - ✅ Authorization Path `/oauth/consent`
+  - ✅ Dynamic OAuth Apps habilitado
+  - ✅ OAuth discovery → HTTP 200
+  - ✅ `/oauth/authorize` não retorna mais `feature_disabled`
+  - ✅ dynamic client registration → HTTP 201
+  - ✅ authorization request → HTTP 302 para `/oauth/consent` com `authorization_id`
+  - 🟡 **GATE HUMANO G2 PROBE — aprovar autorização OAuth do cliente de teste**
+  - ⬜ trocar authorization code por access/refresh token via PKCE
+  - ⬜ validar `client_id` no access token
+  - ⬜ validar refresh token
+  - ⬜ validar revogação do grant
 - ⬜ Tarefa 4 — autorização Bearer por cliente + auditoria fail-closed
 - ⬜ Tarefa 5 — embeddings sem bloquear gravação
 - ⬜ Tarefa 6 — API de recuperação cross-chat
@@ -125,31 +143,33 @@ configurar Site URL / Redirect URL e habilitar OAuth Server + Authorization Path
 - consentimento + testes: commit `4fb72e87b8875e828a9c84576b65784b4d563ec2`
 - `POST /auth/v1/otp`: HTTP 200
 - identidade privada criada no Auth: `VERIFICADO`, valor não versionado
-- confirmação da identidade: `VERIFICADA` (`email_confirmed_at` + `confirmed_at`)
-- login da identidade: `VERIFICADO` (`last_sign_in_at`)
+- confirmação da identidade: `VERIFICADA`
+- login da identidade: `VERIFICADO`
 - integração login/consentimento: commit `c2e322a38677eb0d269eddd019b319575ab981c1`
 - TDD: RED 6/8; GREEN servidor 8/8; suíte combinada 13/13 PASS
 - deploy privado: `dep-da4kg9uk1f9s73ekkrpg` → `live`
 - boundary privada: `/login` sem Basic auth → HTTP 401
-- smoke autenticado das novas rotas: `NÃO VERIFICADO`
 - JWKS: HTTP 200 / ES256 P-256
 - OIDC discovery: HTTP 200
-- OAuth Server: HTTP 404 / `feature_disabled`
+- OAuth authorization-server discovery: HTTP 200
+- authorization endpoint sem parâmetros: HTTP 400 `client_id is required`, comprovando que o servidor está ativo
+- dynamic registration endpoint anunciado no discovery
+- cliente público de probe criado por dynamic registration: HTTP 201
+- authorization request válida: HTTP 302 para o domínio privado `/oauth/consent` com `authorization_id`
 
-## ◆ GATE HUMANO — Configuração do OAuth Server no Supabase Dashboard
+## ◆ GATE HUMANO G2 PROBE — Autorizar o cliente OAuth de teste
 
 **AÇÃO NECESSÁRIA**  
-Alinhar o Site URL/Redirect URL do Auth com o domínio privado do Ledger e habilitar o OAuth 2.1 Server com Authorization Path `/oauth/consent`.
+Abrir a solicitação OAuth de teste preparada pela equipe, autenticar-se pelo fluxo passwordless se solicitado e, na tela de consentimento, aprovar o cliente `Cognitive Ledger MCP G2 Probe`.
 
 **POR QUE PRECISA DE VOCÊ**  
-A interface administrativa disponível nesta execução não expõe a alteração do OAuth Server hospedado. Essa mudança precisa ser feita no Dashboard do projeto.
+OAuth exige consentimento explícito do proprietário. A equipe não deve aprovar acesso ao Ledger em seu nome.
 
 **IMPACTO**  
-Enquanto o Site URL permanecer em `localhost:3000` e o OAuth Server estiver desabilitado, o fluxo authorization code + PKCE não pode ser validado end-to-end.
+Sem a aprovação, não é possível provar end-to-end a emissão do authorization code, a troca PKCE por access/refresh token e a presença do `client_id` no token.
 
-## Estado técnico anterior ao gate
-
-A UI de login e consentimento já está implantada no serviço privado e protegida pela boundary HTTP Basic existente. O deploy está `live`; a rota sem credencial continua retornando 401. O conteúdo autenticado das novas rotas ainda está `NÃO VERIFICADO` até inspeção pelo proprietário.
+**SEGURANÇA DO PROBE**  
+O callback usa um túnel HTTPS temporário controlado pela execução e troca o código automaticamente. O usuário não deve copiar nem enviar authorization code, access token ou refresh token para a conversa.
 
 ## Regra obrigatória de sincronização
 

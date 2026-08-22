@@ -28,18 +28,17 @@ TAREFA ATUAL:
 Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-EM EXECUÇÃO
+AGUARDANDO AÇÃO HUMANA — CONFIRMAÇÃO DA IDENTIDADE
 
 GATE G3:
 ✅ decisão do proprietário recebida
 
-PENDÊNCIA OPERACIONAL ATUAL:
-criar/confirmar a identidade escolhida no Supabase Auth
-por mecanismo suportado de Auth; nenhuma identidade foi criada por SQL direto.
+IDENTIDADE NO SUPABASE AUTH:
+✅ criada por mecanismo suportado de Auth
+🟡 ainda não confirmada pelo proprietário
 
-OBSERVAÇÃO:
-a tentativa automatizada de disparar Magic Link não alcançou o Auth
-por indisponibilidade do transporte remoto da sessão.
+PRÓXIMA AÇÃO:
+proprietário abrir o Magic Link recebido e concluir a confirmação/login.
 ```
 
 ## Roadmap sincronizado
@@ -76,11 +75,17 @@ por indisponibilidade do transporte remoto da sessão.
   - ✅ migration versionada
 - 🟡 Tarefa 3 — OAuth 2.1 do proprietário
   - ✅ **GATE HUMANO G3 — Identidade do proprietário: decisão recebida**
-  - 🟡 criar/confirmar identidade no Supabase Auth — pendente operacional
-  - ⬜ assinatura assimétrica/JWKS
-  - ⬜ OAuth Server
-  - ⬜ consentimento
-  - ⬜ validação real do fluxo
+  - ✅ identidade criada no Supabase Auth por Magic Link/OTP
+  - ◆ **GATE HUMANO — Confirmar controle da identidade**
+  - ✅ assinatura assimétrica `ES256 / P-256` confirmada no JWKS
+  - ✅ OIDC discovery acessível
+  - ✅ `mcp/src/oauth.mjs` versionado
+  - ✅ UI mínima de consentimento versionada
+  - ✅ testes OAuth: 5/5 PASS
+  - ❗ OAuth Server ainda desabilitado (`404 feature_disabled`)
+  - ⬜ habilitar OAuth Server + Authorization Path
+  - ⬜ habilitar/validar registro dinâmico para MCP
+  - ⬜ validação real do fluxo authorization code + PKCE
 - ⬜ Tarefa 4 — autorização Bearer por cliente + auditoria fail-closed
 - ⬜ Tarefa 5 — embeddings sem bloquear gravação
 - ⬜ Tarefa 6 — API de recuperação cross-chat
@@ -102,27 +107,31 @@ por indisponibilidade do transporte remoto da sessão.
 - commit da migration: `73fb5fce12e330d04d45e39577172a2592c1903e`
 - auditoria: `documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md`
 
-### Tarefa 3 — G3
+### Tarefa 3
 
-- decisão do proprietário: `RECEBIDA`;
-- valor da identidade: **não versionado neste repositório público**;
-- consulta operacional ao Supabase Auth: identidade ainda inexistente antes da criação;
-- política: criar/confirmar somente por mecanismo suportado de Supabase Auth, nunca por `INSERT` direto em `auth.users`.
+- auditoria parcial: `documentacao/auditorias/2026-08-22-tarefa-3-oauth-parcial.md`
+- configuração OAuth: commit `8aab9fec85fffb1cd6a5c1c628fb5dd65e51760d`
+- consentimento + testes: commit `4fb72e87b8875e828a9c84576b65784b4d563ec2`
+- `POST /auth/v1/otp`: HTTP 200
+- identidade privada criada no Auth: `VERIFICADO`, valor não versionado
+- JWKS: HTTP 200 / ES256 P-256
+- OIDC discovery: HTTP 200
+- OAuth Server: HTTP 404 / `feature_disabled`
 
-## Gate G3 — estado
+## ◆ GATE HUMANO — Confirmar controle da identidade
 
-```text
-✅ GATE HUMANO G3 — Identidade do proprietário
+**AÇÃO NECESSÁRIA**  
+Abrir o Magic Link enviado pelo Supabase Auth e concluir a confirmação/login da identidade escolhida.
 
-DECISÃO NECESSÁRIA:
-resolvida pelo proprietário.
+**POR QUE PRECISA DE VOCÊ**  
+A prova de controle da caixa de e-mail pertence ao proprietário. A equipe não pode clicar nem consumir esse link em seu lugar.
 
-ESTADO OPERACIONAL:
-a identidade ainda precisa ser criada/confirmada no Supabase Auth.
+**IMPACTO**  
+Até a confirmação, a identidade existe no Auth mas não pode ser considerada validada para o fluxo OAuth do proprietário.
 
-PRIVACIDADE:
-o endereço escolhido não entra no Git público.
-```
+## Próximo bloqueio técnico já identificado
+
+Após a confirmação humana, a equipe continuará a Tarefa 3. O OAuth Server do projeto está atualmente desabilitado e precisará ser habilitado/configurado antes do teste end-to-end.
 
 ## Regra obrigatória de sincronização
 
@@ -145,9 +154,9 @@ checkpoint/README é alinhado
 Nunca apresentar apenas `G1`, `G2`, `G3` ou `G4`. Todo gate deve trazer:
 
 ```text
-◆ GATE HUMANO <ID> — <nome>
+◆ GATE HUMANO <ID opcional> — <nome>
 
-DECISÃO NECESSÁRIA:
+AÇÃO/DECISÃO NECESSÁRIA:
 ...
 
 POR QUE PRECISA DE VOCÊ:

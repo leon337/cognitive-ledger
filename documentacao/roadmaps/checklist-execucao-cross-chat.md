@@ -28,17 +28,19 @@ TAREFA ATUAL:
 Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-AGUARDANDO AÇÃO HUMANA — CONFIRMAÇÃO DA IDENTIDADE
+EM EXECUÇÃO — PREPARAÇÃO DO OAUTH SERVER
 
 GATE G3:
 ✅ decisão do proprietário recebida
+✅ controle da identidade confirmado
 
 IDENTIDADE NO SUPABASE AUTH:
 ✅ criada por mecanismo suportado de Auth
-🟡 ainda não confirmada pelo proprietário
+✅ e-mail confirmado
+✅ login registrado
 
 PRÓXIMA AÇÃO:
-proprietário abrir o Magic Link recebido e concluir a confirmação/login.
+configurar Site URL / Redirect URL e habilitar OAuth Server + Authorization Path no Supabase Dashboard.
 ```
 
 ## Roadmap sincronizado
@@ -76,13 +78,22 @@ proprietário abrir o Magic Link recebido e concluir a confirmação/login.
 - 🟡 Tarefa 3 — OAuth 2.1 do proprietário
   - ✅ **GATE HUMANO G3 — Identidade do proprietário: decisão recebida**
   - ✅ identidade criada no Supabase Auth por Magic Link/OTP
-  - ◆ **GATE HUMANO — Confirmar controle da identidade**
+  - ✅ **GATE HUMANO — Confirmar controle da identidade: concluído**
+  - ✅ e-mail confirmado e login registrado no Supabase Auth
   - ✅ assinatura assimétrica `ES256 / P-256` confirmada no JWKS
   - ✅ OIDC discovery acessível
   - ✅ `mcp/src/oauth.mjs` versionado
   - ✅ UI mínima de consentimento versionada
-  - ✅ testes OAuth: 5/5 PASS
+  - ✅ login passwordless + consentimento integrados ao diário privado
+  - ✅ TDD servidor: RED 6/8 → GREEN 8/8
+  - ✅ suíte combinada OAuth/servidor: 13/13 PASS
+  - ✅ deploy Render `dep-da4kg9uk1f9s73ekkrpg` → `live`
+  - ✅ startup smoke: API operacional validada / serviço ativo
+  - ✅ boundary HTTP Basic preservada (`/login` sem credencial → HTTP 401)
+  - ❓ smoke autenticado de `/login` e `/oauth/consent`: NÃO VERIFICADO
   - ❗ OAuth Server ainda desabilitado (`404 feature_disabled`)
+  - ◆ **GATE HUMANO — Configuração do OAuth Server no Supabase Dashboard**
+  - ⬜ alinhar Site URL + Redirect URL
   - ⬜ habilitar OAuth Server + Authorization Path
   - ⬜ habilitar/validar registro dinâmico para MCP
   - ⬜ validação real do fluxo authorization code + PKCE
@@ -114,24 +125,31 @@ proprietário abrir o Magic Link recebido e concluir a confirmação/login.
 - consentimento + testes: commit `4fb72e87b8875e828a9c84576b65784b4d563ec2`
 - `POST /auth/v1/otp`: HTTP 200
 - identidade privada criada no Auth: `VERIFICADO`, valor não versionado
+- confirmação da identidade: `VERIFICADA` (`email_confirmed_at` + `confirmed_at`)
+- login da identidade: `VERIFICADO` (`last_sign_in_at`)
+- integração login/consentimento: commit `c2e322a38677eb0d269eddd019b319575ab981c1`
+- TDD: RED 6/8; GREEN servidor 8/8; suíte combinada 13/13 PASS
+- deploy privado: `dep-da4kg9uk1f9s73ekkrpg` → `live`
+- boundary privada: `/login` sem Basic auth → HTTP 401
+- smoke autenticado das novas rotas: `NÃO VERIFICADO`
 - JWKS: HTTP 200 / ES256 P-256
 - OIDC discovery: HTTP 200
 - OAuth Server: HTTP 404 / `feature_disabled`
 
-## ◆ GATE HUMANO — Confirmar controle da identidade
+## ◆ GATE HUMANO — Configuração do OAuth Server no Supabase Dashboard
 
 **AÇÃO NECESSÁRIA**  
-Abrir o Magic Link enviado pelo Supabase Auth e concluir a confirmação/login da identidade escolhida.
+Alinhar o Site URL/Redirect URL do Auth com o domínio privado do Ledger e habilitar o OAuth 2.1 Server com Authorization Path `/oauth/consent`.
 
 **POR QUE PRECISA DE VOCÊ**  
-A prova de controle da caixa de e-mail pertence ao proprietário. A equipe não pode clicar nem consumir esse link em seu lugar.
+A interface administrativa disponível nesta execução não expõe a alteração do OAuth Server hospedado. Essa mudança precisa ser feita no Dashboard do projeto.
 
 **IMPACTO**  
-Até a confirmação, a identidade existe no Auth mas não pode ser considerada validada para o fluxo OAuth do proprietário.
+Enquanto o Site URL permanecer em `localhost:3000` e o OAuth Server estiver desabilitado, o fluxo authorization code + PKCE não pode ser validado end-to-end.
 
-## Próximo bloqueio técnico já identificado
+## Estado técnico anterior ao gate
 
-Após a confirmação humana, a equipe continuará a Tarefa 3. O OAuth Server do projeto está atualmente desabilitado e precisará ser habilitado/configurado antes do teste end-to-end.
+A UI de login e consentimento já está implantada no serviço privado e protegida pela boundary HTTP Basic existente. O deploy está `live`; a rota sem credencial continua retornando 401. O conteúdo autenticado das novas rotas ainda está `NÃO VERIFICADO` até inspeção pelo proprietário.
 
 ## Regra obrigatória de sincronização
 

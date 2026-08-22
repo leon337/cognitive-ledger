@@ -53,7 +53,18 @@ export async function gerarEmbedding(
     }),
   });
   if (!resposta.ok) {
-    const codigo = `openai_embedding_http_${resposta.status}`;
+    let detalhe = "sem_codigo";
+    try {
+      const erroCorpo = await resposta.json();
+      const candidato = erroCorpo?.error?.code || erroCorpo?.error?.type;
+      if (typeof candidato === "string") {
+        const seguro = candidato.toLowerCase().replace(/[^a-z0-9_]+/g, "_").slice(0, 48);
+        if (seguro) detalhe = seguro;
+      }
+    } catch {
+      // resposta sem JSON estruturado
+    }
+    const codigo = `openai_embedding_http_${resposta.status}_${detalhe}`;
     console.error(`embedding_falha:${codigo}`);
     throw new Error(codigo);
   }
@@ -107,7 +118,7 @@ export function agendarIndexacaoSemBloquear<T>(
 
 export function codigoErroIndexacaoSeguro(erro: unknown): string {
   if (erro instanceof Error) {
-    if (/^openai_embedding_http_\d{3}$/.test(erro.message)) return erro.message;
+    if (/^openai_embedding_http_\d{3}_[a-z0-9_]{1,48}$/.test(erro.message)) return erro.message;
     if (["openai_api_key_ausente", "embedding_dimensao_invalida"].includes(erro.message)) return erro.message;
   }
   const codigo = (erro as { code?: unknown })?.code;

@@ -26,7 +26,7 @@ Na branch operacional já existem, entre outros componentes:
 - autenticação humana separada da credencial interna Render → API;
 - especificação e plano aprovados para acesso cross-chat;
 - schema cross-chat com clientes, auditoria e vetores;
-- preparação OAuth 2.1 com configuração, consentimento e testes;
+- OAuth 2.1 em execução com identidade confirmada, consentimento, OAuth Server e dynamic registration;
 - auditorias, decisões, recomendações, roadmap, checklist vivo e runbooks operacionais;
 - documentação do princípio de continuidade e consciência situacional para humanos e IAs.
 
@@ -42,7 +42,7 @@ O estado mutável de deploy/serviços deve sempre ser verificado quando necessá
 
 Concluir a **Fase 1 de acesso cross-chat** para que um novo chat autorizado consiga consultar o Cognitive Ledger e recuperar contexto sem depender da conversa original.
 
-Arquitetura-alvo da Fase 1:
+Arquitetura-alvo:
 
 ```text
 ChatGPT / MCF
@@ -67,15 +67,19 @@ A Fase 1 MCP é deliberadamente **somente leitura**.
 | Fundação conceitual do Cognitive Ledger | ✅ Concluída |
 | Evento Cognitivo + Fonte + Relações | ✅ Implementado |
 | Persistência Supabase/Postgres | ✅ Implementada |
-| Diário privado operacional | ✅ Implementado anteriormente e documentado |
+| Diário privado operacional | ✅ Implementado |
 | Separação senha humana × credencial interna | ✅ Implementada |
 | Especificação cross-chat Fase 1 | ✅ Aprovada |
 | Plano de implementação cross-chat | ✅ Aprovado |
 | Tarefa 1 — baseline da API | ✅ Concluída / Deno check exit 0 |
 | Tarefa 2 — clientes, auditoria e vetores | ✅ Concluída / validada |
-| Tarefa 3 — OAuth | 🟡 Em execução / identidade confirmada / OAuth Server pendente |
+| Tarefa 3 — OAuth | 🟡 Em execução / G2 probe |
+| Identidade do proprietário | ✅ Confirmada / login registrado |
 | Assinatura/JWKS | ✅ ES256 / P-256 validado |
-| OAuth Server | ❗ Desabilitado / `feature_disabled` |
+| OAuth Server | ✅ Habilitado |
+| Authorization Path | ✅ `/oauth/consent` |
+| Dynamic OAuth Apps | ✅ Habilitado / HTTP 201 validado |
+| Authorization request | ✅ HTTP 302 → `/oauth/consent` com `authorization_id` |
 | Tarefa 4 — autorização por cliente | ⬜ Não iniciada |
 | Tarefa 5 — embeddings | ⬜ Não iniciada |
 | Tarefa 6 — API de recuperação | ⬜ Não iniciada |
@@ -96,25 +100,27 @@ schema + RLS + vector(1024) + HNSW + RPC híbrida
 → VALIDADO
 
 Tarefa 3:
-G3 — escolha da identidade
-→ DECISÃO RECEBIDA
-
-POST /auth/v1/otp
-→ HTTP 200
-→ identidade criada no Supabase Auth
-→ confirmação humana concluída
-→ login registrado
+identidade do proprietário
+→ confirmada / login registrado
 
 JWKS
 → HTTP 200 / ES256 P-256
 
-OAuth Server
-→ HTTP 404 / feature_disabled
+OAuth discovery
+→ HTTP 200
+
+dynamic client registration
+→ HTTP 201
+
+/oauth/authorize válido
+→ HTTP 302
+→ domínio privado /oauth/consent
+→ authorization_id presente
 ```
 
 ### Próxima ação
 
-> Alinhar Site URL/Redirect URL com o domínio privado e habilitar o OAuth Server com Authorization Path `/oauth/consent`.
+> Executar o **G2 probe real de authorization code + PKCE**. O proprietário precisa aprovar explicitamente o cliente OAuth de teste na tela de consentimento.
 
 ---
 
@@ -128,7 +134,7 @@ OAuth Server
 ✅ Plano de implementação
 ✅ Tarefa 1 — baseline / Deno check
 ✅ Tarefa 2 — clientes, auditoria e vetores
-◆ Tarefa 3 — OAuth 2.1 / configurar OAuth Server
+🟡 Tarefa 3 — OAuth 2.1 / G2 probe
 ⬜ Tarefa 4 — autorização Bearer por cliente
 ⬜ Tarefa 5 — embeddings
 ⬜ Tarefa 6 — recuperação cross-chat
@@ -150,19 +156,19 @@ Legenda:
 ◆ gate humano
 ```
 
-### ◆ GATE HUMANO — Configuração do OAuth Server no Supabase Dashboard
+### ◆ GATE HUMANO G2 PROBE — Autorizar cliente OAuth de teste
 
 **Ação necessária**  
-Alinhar Site URL/Redirect URL com o domínio privado e habilitar OAuth 2.1 Server com Authorization Path `/oauth/consent`.
+Abrir a solicitação OAuth de teste preparada pela equipe, autenticar-se se solicitado e aprovar o cliente `Cognitive Ledger MCP G2 Probe`.
 
 **Por que precisa de você**  
-A interface administrativa disponível nesta execução não expõe essa alteração do projeto hospedado.
+OAuth exige consentimento explícito do proprietário. A equipe não deve aprovar acesso em seu nome.
 
 **Impacto**  
-OAuth permanece `feature_disabled` e o fluxo authorization code + PKCE não pode ser validado end-to-end enquanto essa configuração não for aplicada.
+Sem essa aprovação, não é possível provar end-to-end a emissão do authorization code, troca PKCE por access/refresh token e presença de `client_id` no token.
 
-**Privacidade**  
-O valor da identidade escolhida continua fora do Git público.
+**Segurança**  
+O callback usa túnel HTTPS temporário e troca o código automaticamente. Não envie authorization code, access token ou refresh token para a conversa.
 
 ---
 
@@ -177,26 +183,28 @@ O valor da identidade escolhida continua fora do Git público.
 - **04:29** — primeira validação visual do fluxo do Cognitive Ledger.
 - **04:55** — materialização profissional do ecossistema MCF + Cognitive Ledger.
 - **06:26** — incidente de senha revela ausência de recuperação e acoplamento de autenticação.
-- **06:28** — pendência residual de credencial é registrada e depois resolvida.
 - **07:37** — decisão de não hospedar o MCP na VPS nesta fase.
 - **08:46** — repositório tornado público temporariamente para destravar CI.
 - **09:26** — remediação destrutiva do histórico adiada para preservar rastreabilidade.
 - **21:26** — continuidade cross-chat passa a ser prioridade sobre a remediação estrutural do Git.
-- **22:36** — roadmap canônico + runbook de leitura/gravação são formalizados.
+- **22:36** — roadmap canônico + runbook de leitura/gravação formalizados.
 
 ### 2026-08-22
 
-- **02:11** — aprendizado: a porta de entrada do projeto precisa revelar deterministicamente o estado real.
-- **02:12** — aprendizado: timeline, roadmap visual e estado explícito são necessários para consciência situacional e autonomia de decisão.
-- **02:13** — síntese: todo projeto deve tornar sua continuidade observável para humanos e IAs.
-- **02:25** — aprendizado por falha de execução: registrar o princípio sem aplicá-lo à `main` não resolve discoverability; nasce o **Bootstrap Test**.
-- **02:38** — correção do bootstrap da `main` confirmada e validada visualmente.
-- **02:51** — descoberta: gates humanos precisam ser autoexplicativos e o checklist deve acompanhar o estado real.
-- Tarefa 1 fechada com `deno check` exit 0 em checkout temporário autorizado.
-- Tarefa 2 concluída: clientes, auditoria, `vector(1024)`, HNSW e RPC híbrida validados.
-- Gate Humano G3 resolvido: identidade do proprietário escolhida; o valor permanece privado e fora do Git.
-- Identidade criada via endpoint suportado do Supabase Auth; confirmação humana concluída e login registrado.
-- Login/consentimento integrados ao diário privado e deployados; JWKS ES256/P-256 confirmado; OAuth Server identificado como desabilitado.
+- **02:11** — bootstrap/discoverability identificado como requisito crítico.
+- **02:12** — timeline + roadmap visual + estado explícito identificados como requisito de consciência situacional.
+- **02:13** — princípio transversal de continuidade observável consolidado.
+- **02:25** — Bootstrap Test adicionado ao critério de aceite.
+- **02:38** — correção da `main` confirmada visualmente.
+- **02:51** — gates autoexplicativos + sincronização obrigatória do checklist formalizados.
+- Tarefa 1 concluída com `deno check` exit 0.
+- Tarefa 2 concluída e validada.
+- G3 resolvido; identidade criada e controle confirmado no Supabase Auth.
+- Login/consentimento integrados ao diário privado e deployados; JWKS ES256 confirmado.
+- Site URL e Redirect URL alinhadas ao domínio privado.
+- OAuth Server habilitado com `/oauth/consent`.
+- Dynamic OAuth Apps habilitado e validado por registro HTTP 201.
+- Authorization endpoint validado até a tela de consentimento com `authorization_id`.
 
 ---
 
@@ -211,8 +219,6 @@ Este é o **estado canônico de progresso** e deve ser sincronizado depois de ca
 ### 2. Roadmap de continuidade cross-chat
 
 [Roadmap Canônico — Continuidade Cross-Chat](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md)
-
-Contém história, Tarefas 1–9, runbooks, gates e arquitetura detalhada.
 
 ### 3. Princípio de continuidade e consciência situacional
 
@@ -247,7 +253,7 @@ código + documentação + histórico + exportação controlada
 
 Ler arquivos Markdown do repositório **não equivale** a consultar o diário operacional atual.
 
-Quando um chat disser que “leu o diário”, deve existir um mecanismo real de acesso ao Ledger e evidência compatível.
+Quando um chat disser que “leu o diário”, deve existir mecanismo real de acesso ao Ledger e evidência compatível.
 
 ---
 
@@ -255,9 +261,9 @@ Quando um chat disser que “leu o diário”, deve existir um mecanismo real de
 
 1. Comece por este README.
 2. Abra o [Checklist Vivo](https://github.com/leon337/cognitive-ledger/blob/design/cognitive-ledger-foundation/documentacao/roadmaps/checklist-execucao-cross-chat.md).
-3. Abra a branch [`design/cognitive-ledger-foundation`](https://github.com/leon337/cognitive-ledger/tree/design/cognitive-ledger-foundation).
+3. Abra a branch operacional ativa.
 4. Leia o roadmap detalhado quando precisar do contexto completo.
-5. Se houver `◆ GATE HUMANO`, leia ação/decisão necessária, motivo e impacto antes de responder.
+5. Se houver `◆ GATE HUMANO`, leia ação/decisão necessária, motivo e impacto.
 6. Não reabra frentes adiadas sem novo gate humano.
 
 ---
@@ -266,20 +272,20 @@ Quando um chat disser que “leu o diário”, deve existir um mecanismo real de
 
 Se você é uma IA ou agente recebendo apenas este repositório como contexto:
 
-1. **Não trate a `main` como implementação completa.** Ela é a porta de entrada; a branch operacional ativa está indicada acima.
+1. **Não trate a `main` como implementação completa.**
 2. Leia primeiro o **Checklist Vivo** e use-o como estado canônico de progresso.
 3. Use o roadmap detalhado para arquitetura, runbooks e histórico ampliado.
 4. Identifique `fase`, `tarefa atual`, `bloqueios`, `gates`, `evidências` e `next action`.
 5. Se possuir acesso operacional ao Cognitive Ledger, consulte os Eventos Cognitivos relacionados ao checkpoint.
-6. Se **não** possuir acesso operacional ao Ledger, declare `NÃO DISPONÍVEL / NÃO VERIFICADO` e não finja ter consultado o diário.
-7. Preserve a distinção entre **memória recuperada** e **análise nova**.
+6. Se não possuir acesso operacional, declare `NÃO DISPONÍVEL / NÃO VERIFICADO`.
+7. Preserve **memória recuperada** separada da **análise nova**.
 8. Não transforme ausência de evidência em conclusão.
 9. Nunca apresente um gate somente pelo código; inclua nome humano, ação/decisão necessária, motivo e impacto.
 10. Depois de cada marco verificável, sincronize checklist/checkpoint antes de declarar progresso concluído.
 
 ### Bootstrap Test
 
-Partindo somente desta página, um humano ou IA deve conseguir descobrir:
+Partindo somente desta página, humano ou IA deve conseguir descobrir:
 
 ```text
 ✅ estado atual
@@ -290,7 +296,7 @@ Partindo somente desta página, um humano ou IA deve conseguir descobrir:
 ✅ source of truth
 ✅ tarefa atual
 ✅ próximo passo
-✅ gate humano atual, quando houver
+✅ gate humano atual
 ✅ instruções de continuidade
 ```
 
@@ -336,16 +342,21 @@ TAREFA ATUAL:
 Tarefa 3 — OAuth 2.1 do proprietário
 
 ESTADO:
-EM EXECUÇÃO — PREPARAÇÃO DO OAUTH SERVER
+EM EXECUÇÃO — G2 PROBE AUTHORIZATION CODE + PKCE
 
 IDENTIDADE DO PROPRIETÁRIO:
 ✅ confirmada / login registrado
 
+OAUTH SERVER:
+✅ habilitado
+✅ /oauth/consent
+✅ dynamic registration validado
+
 PRÓXIMA AÇÃO:
-alinhar Site URL / Redirect URL e habilitar OAuth Server + Authorization Path `/oauth/consent`
+proprietário aprovar o cliente OAuth de teste no G2 probe
 
 DEPOIS:
-validar discovery, registro dinâmico e authorization code + PKCE
+trocar code por tokens via PKCE, validar client_id e refresh
 
 FONTE OPERACIONAL DO DIÁRIO:
 Supabase/Postgres

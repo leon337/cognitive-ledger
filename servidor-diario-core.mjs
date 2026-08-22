@@ -97,6 +97,32 @@ export async function verificarApi({ usuario, credencialApi, apiUrl, fetchImpl =
   return { status: resposta.status, total: dados.registros.length };
 }
 
+export async function reindexarApi({ usuario, credencialApi, apiUrl, limite = 10, fetchImpl = fetch }) {
+  if (!usuario || !credencialApi || !apiUrl) throw new Error("configuração da API ausente");
+  const apiBase = apiUrl.replace(/\/+$/, "");
+  const authorization = criarAutorizacao(usuario, credencialApi);
+  const seguro = Math.max(1, Math.min(Number.isFinite(limite) ? Math.trunc(limite) : 10, 25));
+  const resposta = await fetchImpl(`${apiBase}/admin/reindexar`, {
+    method: "POST",
+    headers: {
+      Authorization: authorization,
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ limite: seguro })
+  });
+  if (!resposta.ok) throw new Error(`Reindexação indisponível ou não autorizada: ${resposta.status}`);
+  const dados = await resposta.json();
+  for (const campo of ["processados", "falhas", "restantes_estimados"]) {
+    if (!Number.isInteger(dados?.[campo]) || dados[campo] < 0) throw new Error("Contrato de reindexação inválido");
+  }
+  return {
+    processados: dados.processados,
+    falhas: dados.falhas,
+    restantes_estimados: dados.restantes_estimados
+  };
+}
+
 export function criarServidor({ pastaPublica, usuario, validarAcesso, credencialApi, apiUrl, supabaseUrl, supabasePublishableKey, fetchImpl = fetch }) {
   if (!pastaPublica || !usuario || typeof validarAcesso !== "function" || !credencialApi || !apiUrl || !supabaseUrl || !supabasePublishableKey) {
     throw new Error("configuração obrigatória do servidor ausente");

@@ -28,25 +28,28 @@ TAREFA ATUAL:
 Tarefa 5 — Indexação semântica multilíngue
 
 ESTADO:
-EM EXECUÇÃO — G4 RESOLVIDO
+❗ BLOQUEADA NO BACKFILL — GATE HUMANO DE SALDO/CRÉDITO OPENAI
 
-TAREFA 3:
-✅ OAuth 2.1 validado end-to-end
-✅ G2 PASS
+G4 — CHAVE DA OPENAI:
+✅ resolvido
+✅ OPENAI_API_KEY configurada em Edge Function Secrets
 
-TAREFA 4:
-✅ implementação concluída
-✅ TDD GREEN 9/9
-✅ deno check PASS
-✅ código versionado
-⚠ runtime de produção ainda não recebeu esta versão da Edge Function
+IMPLEMENTAÇÃO DA TAREFA 5:
+✅ texto determinístico
+✅ text-embedding-3-large / dimensions=1024
+✅ indexação em background sem bloquear gravação
+✅ /admin/reindexar Basic-only
+✅ Edge Function v6 ativa
+✅ telemetria segura
+✅ Deno/Node GREEN
 
-GATE HUMANO G4:
-✅ `OPENAI_API_KEY` configurada em Edge Function Secrets pelo proprietário
-✅ valor não exposto em Git/documentação/conversa
+BACKFILL REAL:
+❌ 0 de 25 eventos indexados
+✅ causa comprovada: openai_embedding_http_429_credit_balance_exhausted
+✅ executor automático desligado enquanto o gate está aberto
 
 PRÓXIMA AÇÃO:
-executar Tarefa 5 em RED → GREEN → REFACTOR, validar embedding real, indexação em background e backfill sem bloquear a gravação.
+o proprietário disponibiliza saldo/crédito utilizável para a OpenAI API; depois a equipe reativa o backfill, valida 100% do corpus e continua automaticamente para a Tarefa 6.
 ```
 
 ## Roadmap sincronizado
@@ -71,49 +74,38 @@ executar Tarefa 5 em RED → GREEN → REFACTOR, validar embedding real, indexa�
   - ✅ `buscar_eventos_hibrido(...)`
   - ✅ Security Advisor sem WARN/ERROR novos
 - ✅ Tarefa 3 — OAuth 2.1 do proprietário
-  - ✅ G3 — identidade do proprietário escolhida
-  - ✅ identidade criada e confirmada no Supabase Auth
-  - ✅ login registrado
+  - ✅ G3 — identidade do proprietário escolhida e confirmada
   - ✅ JWKS `ES256 / P-256`
   - ✅ OIDC discovery
   - ✅ OAuth Server habilitado
   - ✅ Authorization Path `/oauth/consent`
   - ✅ Dynamic OAuth Apps habilitado
   - ✅ dynamic client registration → HTTP 201
-  - ✅ authorize → consent com `authorization_id`
-  - ✅ G2 probe real concluído
+  - ✅ G2 probe end-to-end
   - ✅ authorization code exchange
-  - ✅ `client_id` validado no token
-  - ✅ issuer/audience validados
-  - ✅ UserInfo validado
-  - ✅ refresh token validado
-  - ✅ UserInfo após refresh validado
+  - ✅ `client_id`, issuer/audience, UserInfo e refresh validados
 - ✅ Tarefa 4 — autorização Bearer por cliente + auditoria fail-closed
-  - ✅ RED válido: 1 PASS / 7 FAIL
-  - ✅ GREEN final: 9 PASS / 0 FAIL
+  - ✅ RED válido
+  - ✅ GREEN 9/9
   - ✅ `/v1/*` exige Bearer e rejeita Basic
   - ✅ `iss`, `aud`, `exp`, `sub`, `client_id` validados
-  - ✅ token validado pelo Supabase Auth antes do uso das claims
-  - ✅ owner divergente → 403
-  - ✅ primeiro cliente recebe somente capacidades padrão de leitura
-  - ✅ `ler_fonte_bruta` não é capacidade padrão
-  - ✅ cliente inativo/revogado/sem capacidade → 403
-  - ✅ revogação isolada por cliente
-  - ✅ auditoria fail-closed → 503 sem vazamento de conteúdo
-  - ✅ `/timeline` e `/registros` permanecem Basic legado
+  - ✅ owner/capacidades/revogação
+  - ✅ auditoria fail-closed
+  - ✅ Basic legado preservado
   - ✅ Bearer não ganha escrita
-  - ✅ `deno check` da API → PASS
-  - ✅ suíte Node OAuth/servidor privado → 13/13 PASS
-  - ✅ código e testes versionados
-  - ❓ runtime da Edge Function ainda não atualizado com esta versão
-- 🟡 Tarefa 5 — embeddings sem bloquear gravação
-  - ✅ **GATE HUMANO G4 — chave da OpenAI configurada com segurança**
-  - ⬜ texto determinístico para embeddings
-  - ⬜ `text-embedding-3-large` / `dimensions=1024`
-  - ⬜ indexação em background sem bloquear gravação
-  - ⬜ `/admin/reindexar` Basic-only
-  - ⬜ backfill dos eventos atuais
-  - ⬜ teste de degradação sem quebrar `POST /registros`
+  - ✅ runtime incluído na Edge Function atualmente implantada
+- ❗ Tarefa 5 — embeddings sem bloquear gravação
+  - ✅ G4 — chave da OpenAI configurada com segurança
+  - ✅ texto determinístico para embeddings
+  - ✅ `text-embedding-3-large` / `dimensions=1024`
+  - ✅ indexação em background sem bloquear gravação
+  - ✅ `/admin/reindexar` Basic-only
+  - ✅ teste de degradação sem quebrar `POST /registros`
+  - ✅ executor privado de backfill
+  - ✅ Edge Function v6 ativa
+  - ✅ diagnóstico seguro do provedor
+  - ❌ backfill: 0/25
+  - ◆ **GATE HUMANO — Saldo/crédito da OpenAI API**
 - ⬜ Tarefa 6 — API de recuperação cross-chat
 - ⬜ Tarefa 7 — MCP remoto tool-only
 - ⬜ Tarefa 8 — deploy MCP + conexão ChatGPT
@@ -137,21 +129,40 @@ executar Tarefa 5 em RED → GREEN → REFACTOR, validar embedding real, indexa�
 
 - auditoria parcial: `documentacao/auditorias/2026-08-22-tarefa-3-oauth-parcial.md`
 - auditoria final G2: `documentacao/auditorias/2026-08-22-tarefa-3-oauth-g2-final.md`
-- OAuth Server + DCR: validados
-- G2 probe final: `PASS` end-to-end
-- resultado técnico: exchange, `client_id`, issuer/audience, UserInfo, refresh e UserInfo pós-refresh validados
+- G2 probe: PASS end-to-end
 
 ### Tarefa 4
 
 - auditoria: `documentacao/auditorias/2026-08-22-tarefa-4-autorizacao-bearer-auditoria.md`
-- `deno check supabase/functions/cognitive-ledger-api/index.ts` → PASS
-- Deno tests → `9 passed | 0 failed`
-- Node OAuth/servidor → `13/13 PASS`
-- boundary de runtime: `NÃO IMPLANTADA AINDA`
+- Deno Tarefa 4: `9 passed / 0 failed`
+- runtime incorporado à Edge Function implantada nas versões posteriores
 
 ### Tarefa 5
 
-- G4: `OPENAI_API_KEY` configurada em Edge Function Secrets pelo proprietário; valor não registrado em Git.
+- auditoria: `documentacao/auditorias/2026-08-22-tarefa-5-embeddings-bloqueio-credito.md`
+- Edge Function: versão 6 `ACTIVE`
+- `verify_jwt=false` preservado por autenticação customizada Basic/OAuth
+- testes Deno após instrumentação: `15 passed / 0 failed`
+- teste específico do código estruturado do provedor: `7 passed / 0 failed`
+- executor privado Node: `9 passed / 0 failed`
+- banco antes do backfill: 25 eventos / 0 embeddings
+- backfill real: 0 processados / 25 falhas
+- causa comprovada: `openai_embedding_http_429_credit_balance_exhausted`
+- `COGNITIVE_LEDGER_REINDEXAR_NO_STARTUP=0` após diagnóstico
+
+## ◆ GATE HUMANO — Saldo/crédito da OpenAI API
+
+**AÇÃO NECESSÁRIA**  
+Disponibilizar saldo/crédito utilizável para a conta/projeto OpenAI associado à `OPENAI_API_KEY` configurada no Supabase.
+
+**POR QUE PRECISA DE VOCÊ**  
+O provedor respondeu `credit_balance_exhausted`. Alterar billing, método de pagamento ou aquisição de créditos envolve autoridade financeira do proprietário.
+
+**IMPACTO**  
+Sem saldo disponível, o código de embeddings permanece funcional e testado, mas o backfill real não pode produzir vetores e a Tarefa 5 não pode ser encerrada.
+
+**RETOMADA AUTOMÁTICA APÓS O GATE**  
+Reativar temporariamente o executor → executar backfill → verificar 100% dos embeddings/modelo → desligar executor → fechar Tarefa 5 → iniciar Tarefa 6.
 
 ## Regra obrigatória de execução contínua
 
@@ -177,7 +188,7 @@ Falha técnica não é Gate Humano. A execução só para por decisão exclusiva
 
 ## Regra para gates
 
-Nunca apresentar apenas `G1`, `G2`, `G3` ou `G4`. Todo gate deve trazer:
+Nunca apresentar apenas um código. Todo gate deve trazer:
 
 ```text
 ◆ GATE HUMANO <ID opcional> — <nome>

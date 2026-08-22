@@ -1,0 +1,39 @@
+name: Validar protótipo estrutural
+
+on:
+  push:
+    branches:
+      - main
+      - design/cognitive-ledger-foundation
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar Deno 2.9.4 com checksum
+        run: |
+          curl -fsSLo /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.4/deno-x86_64-unknown-linux-gnu.zip
+          printf '%s  %s\n' 'c24f955d9fbfe0ea5ae2b501c8e71ae76e31e4c9782390a54a284b3364fda725' '/tmp/deno.zip' | sha256sum -c -
+          unzip -q /tmp/deno.zip -d "$HOME/.local/bin"
+          printf '%s\n' "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Exibir versão do Deno
+        run: deno --version
+
+      - name: Validar Edge Function com Deno
+        run: deno check supabase/functions/cognitive-ledger-api/index.ts
+
+      - name: Validar sintaxe JavaScript
+        run: |
+          node --check site/dados/registros.js
+          node --check site/scripts/aplicacao.js
+
+      - name: Validar estrutura do protótipo
+        run: node site/testes/validar-estrutura.mjs

@@ -1,32 +1,86 @@
 # Cognitive Ledger
 
-**Status:** `DISCOVERY / DESIGN`
+**Status:** `DESCOBERTA / DESIGN / PROTÓTIPO ESTRUTURAL`
 
-Cognitive Ledger is a personal continuity and knowledge system for preserving ideas, decisions, learning, conversations, and the evolution of thought across AI chats, projects, tools, and time.
+O Cognitive Ledger é um sistema pessoal de continuidade cognitiva e conhecimento para preservar ideias, decisões, aprendizados, conversas e a evolução do pensamento ao longo de chats com IA, projetos, ferramentas e tempo.
 
-The core principle is simple:
+O princípio central é simples:
 
-> Your thinking should not be trapped in the chat where it happened.
+> Seu pensamento não deve ficar preso ao chat onde aconteceu.
 
-This repository is being designed as a user-owned source of truth for structured cognitive records and their supporting sources. The intended product includes chronological retrieval, semantic continuity, provenance, and future AI-assisted recall.
+Este repositório está sendo estruturado como uma fonte de verdade controlada pelo usuário para registros cognitivos estruturados e suas fontes de apoio. O produto pretende combinar recuperação cronológica, continuidade semântica, proveniência e consulta assistida por IA.
 
-## Current phase
+## Fase atual
 
-The project is currently in product and architecture discovery. No production application is implemented yet.
+O projeto está em descoberta de produto, arquitetura da informação e prototipação estrutural. Existe uma camada web estática em `site/` destinada a amadurecer navegação, hierarquia e apresentação de conteúdo antes da etapa de design visual no Google Stitch.
 
-## Privacy boundary
+## Idioma operacional
 
-This repository may eventually contain personal journal material and raw conversation sources. **Do not store personal or raw journal content while the repository is public.** Product/design documents may be versioned publicly, but private cognitive records require an appropriate private storage boundary.
+Português do Brasil é o idioma operacional deste repositório.
 
-## Planned areas
+- documentação e nomes criados por nós devem preferir português;
+- nomes impostos por convenções técnicas, como `README.md`, `index.html`, `.github/` e extensões de arquivo, permanecem como exigido pelas ferramentas;
+- identificadores internos podem manter termos técnicos quando isso evitar ambiguidade ou facilitar integração.
 
-- `docs/` — product vision, domain model, architecture and design
-- `journal/` — structured cognitive records
-- `sources/` — supporting raw sources/provenance
-- `decisions/` — explicit decisions and their rationale
-- `concepts/` — evolving concepts and terminology
-- `docs/superpowers/specs/` — reviewed design specifications
+## Estrutura principal
 
-## Relationship to MCF
+- `documentacao/` — visão de produto, domínio, arquitetura da informação, decisões, planos e especificações;
+- `diario/` — registros cognitivos estruturados organizados cronologicamente;
+- `fontes/` — proveniência e fontes aprovadas que sustentam os registros;
+- `site/` — protótipo navegável em HTML, CSS e JavaScript simples;
+- `conceitos/` — conceitos em evolução, quando necessários.
 
-Cognitive Ledger is a separate project. It may later provide continuity/context to MCF and receive outcomes/learning back from MCF, but neither project should be treated as the other's current source of truth.
+## Documentação operacional
+
+- `documentacao/autenticacao-e-recuperacao-de-acesso.md` — descreve o mecanismo atual de autenticação do diário privado, a separação entre acesso humano e credencial interna, o incidente de perda de senha de 2026-08-21, o retrabalho gerado, o fechamento da variável residual no Render e a necessidade futura de recuperação autônoma de senha.
+- `documentacao/recomendacoes/2026-08-21-mcp-e-cloud-infrastructure.md` — registra a recomendação de manter a Fase 1 do MCP independente da VPS enquanto `cloud-infrastructure` amadurece seus mecanismos de plataforma; qualquer hospedagem futura na VPS exige reavaliação e novo gate humano.
+- `documentacao/decisoes/2026-08-21-visibilidade-temporaria-repositorio.md` — registra que o repositório foi tornado público temporariamente para destravar o CI, sem alterar a privacidade do diário, dos secrets ou dos dados operacionais.
+
+## Modelo central
+
+Uma conversa é uma fonte. A unidade durável é o **Evento Cognitivo**.
+
+Cada Evento Cognitivo separa duas camadas:
+
+1. **Registro Cognitivo** — interpretação estruturada: contexto, ideias, decisões, hipóteses, aprendizados, questões abertas e próximos passos;
+2. **Registro de Fonte** — proveniência e, quando apropriado, referência ou cópia autorizada da fonte original.
+
+O sistema nunca deve apresentar interpretação gerada por IA como se fosse a fonte original.
+
+## Protótipo navegável
+
+O protótipo em `site/` é deliberadamente simples. Seu objetivo é permitir que a estrutura do produto seja usada e criticada durante a descoberta:
+
+```text
+conceito
+  ↓
+estrutura de informação
+  ↓
+HTML + CSS + JavaScript simples
+  ↓
+uso e revisão
+  ↓
+refinamento
+  ↓
+briefing + link para Google Stitch
+  ↓
+design visual final
+```
+
+A responsabilidade desta fase é definir o que existe, como as informações se relacionam e como o usuário navega. Cores, identidade visual, tipografia final e acabamento ficam para uma etapa posterior.
+
+## Privacidade
+
+Este repositório está **público temporariamente** por decisão operacional do proprietário para permitir a continuidade das validações de CI. Essa condição não é uma decisão permanente de visibilidade e deve ser reavaliada quando o motivo operacional deixar de existir.
+
+A visibilidade pública do código **não autoriza a publicação de dados privados do Cognitive Ledger**. Senhas, tokens, API keys, secrets, connection strings reais, dados canônicos do diário e fontes brutas pessoais permanecem proibidos no Git.
+
+O site publicado deve usar dados de demonstração ou conteúdo conscientemente selecionado para exposição.
+
+A decisão temporária e os critérios de reversão estão documentados em `documentacao/decisoes/2026-08-21-visibilidade-temporaria-repositorio.md`.
+
+## Relação com o MCF
+
+O Cognitive Ledger é um projeto separado do MCF. Futuramente pode fornecer continuidade/contexto ao MCF e receber resultados ou aprendizados de volta, mas nenhum dos dois deve ser tratado silenciosamente como fonte de verdade do outro.
+
+Nesta fase, os contratos de agentes do MCF também estão sendo usados como método de coordenação do trabalho de produto, arquitetura, frontend, segurança, integração e auditoria. Isso não equivale a afirmar que existem processos cognitivos independentes executando simultaneamente quando a execução ocorre em uma única sessão.

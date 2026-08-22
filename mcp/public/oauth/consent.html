@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Autorizar acesso — Cognitive Ledger</title>
+</head>
+<body>
+  <main>
+    <h1>Autorizar acesso ao Cognitive Ledger</h1>
+    <p id="estado">Carregando solicitação de autorização…</p>
+    <section id="detalhes" hidden>
+      <p><strong>Aplicação:</strong> <span id="cliente"></span></p>
+      <p><strong>Redirecionamento:</strong> <span id="redirect"></span></p>
+      <div>
+        <strong>Permissões solicitadas:</strong>
+        <ul id="escopos"></ul>
+      </div>
+      <button id="aprovar" type="button">Aprovar</button>
+      <button id="negar" type="button">Negar</button>
+    </section>
+  </main>
+  <script type="module" src="./consent.js"></script>
+</body>
+</html>

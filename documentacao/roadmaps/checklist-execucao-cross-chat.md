@@ -28,7 +28,7 @@ TAREFA ATUAL:
 Tarefa 5 — Indexação semântica multilíngue
 
 ESTADO:
-AGUARDANDO GATE HUMANO G4 — chave da OpenAI para embeddings
+EM EXECUÇÃO — G4 RESOLVIDO
 
 TAREFA 3:
 ✅ OAuth 2.1 validado end-to-end
@@ -41,8 +41,12 @@ TAREFA 4:
 ✅ código versionado
 ⚠ runtime de produção ainda não recebeu esta versão da Edge Function
 
+GATE HUMANO G4:
+✅ `OPENAI_API_KEY` configurada em Edge Function Secrets pelo proprietário
+✅ valor não exposto em Git/documentação/conversa
+
 PRÓXIMA AÇÃO:
-resolver o Gate Humano G4 e configurar `OPENAI_API_KEY` por canal seguro no ambiente da Edge Function. A chave nunca entra no Git, documentação ou conversa.
+executar Tarefa 5 em RED → GREEN → REFACTOR, validar embedding real, indexação em background e backfill sem bloquear a gravação.
 ```
 
 ## Roadmap sincronizado
@@ -102,8 +106,8 @@ resolver o Gate Humano G4 e configurar `OPENAI_API_KEY` por canal seguro no ambi
   - ✅ suíte Node OAuth/servidor privado → 13/13 PASS
   - ✅ código e testes versionados
   - ❓ runtime da Edge Function ainda não atualizado com esta versão
-- ◆ Tarefa 5 — embeddings sem bloquear gravação
-  - ◆ **GATE HUMANO G4 — Configurar chave da OpenAI para embeddings**
+- 🟡 Tarefa 5 — embeddings sem bloquear gravação
+  - ✅ **GATE HUMANO G4 — chave da OpenAI configurada com segurança**
   - ⬜ texto determinístico para embeddings
   - ⬜ `text-embedding-3-large` / `dimensions=1024`
   - ⬜ indexação em background sem bloquear gravação
@@ -132,6 +136,7 @@ resolver o Gate Humano G4 e configurar `OPENAI_API_KEY` por canal seguro no ambi
 ### Tarefa 3
 
 - auditoria parcial: `documentacao/auditorias/2026-08-22-tarefa-3-oauth-parcial.md`
+- auditoria final G2: `documentacao/auditorias/2026-08-22-tarefa-3-oauth-g2-final.md`
 - OAuth Server + DCR: validados
 - G2 probe final: `PASS` end-to-end
 - resultado técnico: exchange, `client_id`, issuer/audience, UserInfo, refresh e UserInfo pós-refresh validados
@@ -144,16 +149,9 @@ resolver o Gate Humano G4 e configurar `OPENAI_API_KEY` por canal seguro no ambi
 - Node OAuth/servidor → `13/13 PASS`
 - boundary de runtime: `NÃO IMPLANTADA AINDA`
 
-## ◆ GATE HUMANO G4 — Configurar chave da OpenAI para embeddings
+### Tarefa 5
 
-**AÇÃO NECESSÁRIA**  
-Disponibilizar uma `OPENAI_API_KEY` válida para o ambiente da Supabase Edge Function por um canal seguro. A chave não deve ser enviada em mensagem, commit, arquivo público, log ou screenshot.
-
-**POR QUE PRECISA DE VOCÊ**  
-A Tarefa 5 chama a API de embeddings da OpenAI. A equipe não deve criar, selecionar, expor ou assumir uma credencial de cobrança/autoridade sem controle explícito do proprietário.
-
-**IMPACTO**  
-Sem essa chave, a equipe pode escrever testes e estrutura local, mas não pode validar embeddings reais, executar o backfill do corpus nem aprovar o caminho semântico da Fase 1.
+- G4: `OPENAI_API_KEY` configurada em Edge Function Secrets pelo proprietário; valor não registrado em Git.
 
 ## Regra obrigatória de execução contínua
 

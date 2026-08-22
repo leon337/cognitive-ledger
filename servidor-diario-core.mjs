@@ -50,7 +50,7 @@ const cspPrivada = "default-src 'self'; style-src 'self'; script-src 'self'; img
 function headersPrivados(extra = {}, csp = cspPrivada) {
   return {
     "Cache-Control": "no-store, private",
-    "X-Robots-Tag": "noindex, nofollow, noarchive",
+    "X-Robots-Tag": "noindex, nofollow,noarchive",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "no-referrer",
     "Content-Security-Policy": csp,
@@ -116,10 +116,12 @@ export async function reindexarApi({ usuario, credencialApi, apiUrl, limite = 10
   for (const campo of ["processados", "falhas", "restantes_estimados"]) {
     if (!Number.isInteger(dados?.[campo]) || dados[campo] < 0) throw new Error("Contrato de reindexação inválido");
   }
+  const erros = dados?.erros && typeof dados.erros === "object" ? dados.erros : {};
   return {
     processados: dados.processados,
     falhas: dados.falhas,
-    restantes_estimados: dados.restantes_estimados
+    restantes_estimados: dados.restantes_estimados,
+    erros
   };
 }
 

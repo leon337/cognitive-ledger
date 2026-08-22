@@ -109,7 +109,18 @@ Deno.test("falha de indexação pode ser absorvida sem alterar resultado da grav
 });
 
 Deno.test("normaliza erro de indexação sem expor conteúdo", () => {
-  assertEquals(codigoErroIndexacaoSeguro(new Error("openai_embedding_http_401")), "openai_embedding_http_401");
+  assertEquals(codigoErroIndexacaoSeguro(new Error("openai_embedding_http_401_invalid_api_key")), "openai_embedding_http_401_invalid_api_key");
   assertEquals(codigoErroIndexacaoSeguro({ code: "22P02", message: "sensível" }), "db_22P02");
   assertEquals(codigoErroIndexacaoSeguro(new Error("detalhe potencialmente sensível")), "erro_indexacao_desconhecido");
+});
+
+Deno.test("preserva código estruturado seguro do provedor em erro 429", async () => {
+  await assertRejects(
+    () => gerarEmbedding("texto", {
+      apiKey: "teste",
+      fetcher: async () => new Response(JSON.stringify({ error: { type: "insufficient_quota", code: "insufficient_quota" } }), { status: 429, headers: { "content-type": "application/json" } }),
+    }),
+    Error,
+    "openai_embedding_http_429_insufficient_quota",
+  );
 });

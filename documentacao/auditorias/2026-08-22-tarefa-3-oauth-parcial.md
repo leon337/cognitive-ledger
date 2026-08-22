@@ -1,7 +1,7 @@
 # Auditoria — Tarefa 3 OAuth 2.1 — checkpoint parcial
 
 **Data:** 2026-08-22  
-**Estado:** `EM EXECUÇÃO / AGUARDANDO CONFIRMAÇÃO HUMANA DA IDENTIDADE`
+**Estado:** `EM EXECUÇÃO / IDENTIDADE CONFIRMADA / OAUTH SERVER PENDENTE`
 
 ## Objetivo
 
@@ -13,7 +13,7 @@ Preparar a autenticação OAuth 2.1 do proprietário sem substituir o login priv
 - O valor da identidade não foi versionado no repositório público.
 - Consulta inicial a `auth.users`: identidade inexistente antes do fluxo de Auth.
 - `POST /auth/v1/otp` pelo mecanismo suportado do Supabase Auth: `HTTP 200`.
-- Consulta posterior a `auth.users`: identidade criada, ainda não confirmada e sem login concluído.
+- Consulta posterior ao clique no Magic Link: identidade confirmada (`email_confirmed_at`/`confirmed_at`) e login registrado (`last_sign_in_at`).
 - JWKS público: `HTTP 200`.
 - Chave de assinatura anunciada: `ES256 / P-256`.
 - OIDC discovery: `HTTP 200`, anunciando authorization code, refresh token e PKCE.
@@ -52,11 +52,23 @@ identidade privada presente nos artefatos versionados
 
 O projeto já utiliza chave assimétrica ES256 no JWKS. Portanto, não há justificativa para realizar rotação de chave nesta etapa apenas para satisfazer OAuth/OIDC.
 
+## Avanço após confirmação
+
+- Gate de controle da identidade: `CONCLUÍDO`.
+- Login/consentimento integrados ao serviço privado: commit `c2e322a38677eb0d269eddd019b319575ab981c1`.
+- TDD: RED inicial `6 PASS / 2 FAIL`; após implementação `8/8 PASS`.
+- Suíte combinada servidor + OAuth: `13/13 PASS`.
+- Projeção privada: `VALIDADA`; configuração OAuth servida em runtime e não gravada no bundle.
+- Deploy Render `dep-da4kg9uk1f9s73ekkrpg`: `live`.
+- Startup smoke: API operacional validada e servidor ativo.
+- Boundary preservada: GET `/login` sem HTTP Basic → `401`.
+- Smoke autenticado das novas páginas: `NÃO VERIFICADO`.
+
 ## Bloqueios atuais
 
-1. O proprietário precisa concluir o Magic Link enviado para confirmar controle da identidade.
+1. O Site URL do Supabase ainda está efetivamente apontando para `localhost:3000`, evidenciado pelo redirect após o Magic Link.
 2. O OAuth Server do Supabase está desabilitado e precisará ser habilitado antes do fluxo end-to-end.
-3. A autorização real depende de uma URL de consentimento acessível e da configuração do Authorization Path.
+3. O Site URL/Redirect URL deve apontar ao domínio privado e o Authorization Path deve ser `/oauth/consent`.
 
 ## Limites preservados
 
@@ -70,4 +82,4 @@ O projeto já utiliza chave assimétrica ES256 no JWKS. Portanto, não há justi
 
 ## Próximo critério de avanço
 
-Após a confirmação humana da identidade, verificar `email_confirmed_at`/sessão e continuar a configuração do OAuth Server conforme o plano aprovado.
+Após a configuração administrativa no Supabase Dashboard, verificar discovery OAuth em HTTP 200, registro dinâmico para MCP e executar o fluxo authorization code + PKCE end-to-end.

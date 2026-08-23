@@ -1,204 +1,102 @@
-# Checklist Vivo — Execução Cross-Chat do Cognitive Ledger
+# Checklist Vivo — Continuidade Cross-Chat do Cognitive Ledger
 
-**Atualizado em:** 2026-08-22  
-**Estado:** `SINCRONIZADO COM A EXECUÇÃO`  
-**Função:** painel canônico de progresso da Fase 1 cross-chat.
+**Atualizado em:** 2026-08-23
 
-> O plano detalhado em `documentacao/planos/2026-08-21-acesso-cross-chat-fase-1.md` continua sendo a receita de implementação. Este arquivo representa o estado real e mutável da execução.
+**Estado:** `LAB ZERO-COST IMPLEMENTADO LOCALMENTE / NÃO IMPLANTADO`
 
-## Legenda
+**Branch:** `codex/cognitive-ledger-zero-cost-lab`
 
-```text
-✅ concluído / validado
-🟡 em execução
-❗ bloqueado
-❓ não verificado
-⬜ não iniciado
-⏸️ adiado
-◆ gate humano
-```
+**Base:** `origin/design/cognitive-ledger-foundation@842b1fa`
 
-## Estado atual
+Este arquivo descreve o estado comprovado da branch isolada. Não representa o
+estado live de Supabase, Render, VPS, Vercel, ChatGPT ou produção.
 
-```text
-FASE:
-Fase 1 — Continuidade Cross-Chat
+## Resultado desta etapa
 
-TAREFA ATUAL:
-Tarefa 5 — Indexação semântica multilíngue
+- ✅ OpenAI deixou de ser ativada implicitamente por presença de API key.
+- ✅ Busca textual local passou a ser o padrão zero-cost.
+- ✅ Banco lab reproduzível e seed de três eventos sintéticos foram versionados.
+- ✅ Quatro rotas read-only foram implementadas com capability por operação.
+- ✅ Auditoria fail-closed ocorre antes da liberação do conteúdo privado.
+- ✅ Fonte bruta exige capability adicional e justificativa.
+- ✅ Rotas mutantes são negadas na fronteira `/v1` read-only.
+- ✅ MCP expõe exatamente quatro ferramentas, todas marcadas read-only.
+- ✅ Capsule mínima do Cognitive Ledger foi adicionada para o MCF.
+- ✅ Testes provam zero chamada paga no modo lab e zero mutação de Eventos.
+- ✅ CI cria o diretório do Deno e repete Node, Deno, MCP e banco descartável.
+- ⬜ Revisão independente da branch.
+- ⬜ Registro do projeto no Registry central do MCF.
+- ⬜ E2E integrado MCF → MCP → API → banco lab.
+- ⬜ Lab/staging remoto com dados exclusivamente sintéticos.
+- ⬜ Conexão ChatGPT após aprovação do gate de integração.
+- ⏸️ Produção e dados reais — fora do escopo e não autorizados.
+- ⏸️ Remediação do histórico público — decisão separada ainda pendente.
 
-ESTADO:
-❗ BLOQUEADA NO BACKFILL — GATE HUMANO DE SALDO/CRÉDITO OPENAI
+## Contrato read-only
 
-G4 — CHAVE DA OPENAI:
-✅ resolvido
-✅ OPENAI_API_KEY configurada em Edge Function Secrets
+| Operação | Método/rota | Capability | Regra adicional |
+| --- | --- | --- | --- |
+| diário | `GET /v1/diario` | `ler_diario` | sem conteúdo bruto |
+| busca | `POST /v1/buscar` | `buscar_eventos` | fallback textual sinalizado |
+| contexto | `POST /v1/contexto` | `recuperar_contexto` | preserva tipos epistêmicos |
+| fonte | `POST /v1/fonte` | `ler_fonte_bruta` | justificativa obrigatória |
 
-IMPLEMENTAÇÃO DA TAREFA 5:
-✅ texto determinístico
-✅ text-embedding-3-large / dimensions=1024
-✅ indexação em background sem bloquear gravação
-✅ /admin/reindexar Basic-only
-✅ Edge Function v6 ativa
-✅ telemetria segura
-✅ Deno/Node GREEN
+O MCP reflete essas operações como `ler_diario`, `buscar_eventos`,
+`recuperar_contexto` e `ler_fonte_bruta`. Não registra prompts, resources ou
+ferramentas mutantes.
 
-BACKFILL REAL:
-❌ 0 de 25 eventos indexados
-✅ causa comprovada: openai_embedding_http_429_credit_balance_exhausted
-✅ executor automático desligado enquanto o gate está aberto
-
-PRÓXIMA AÇÃO:
-o proprietário disponibiliza saldo/crédito utilizável para a OpenAI API; depois a equipe reativa o backfill, valida 100% do corpus e continua automaticamente para a Tarefa 6.
-```
-
-## Roadmap sincronizado
-
-- ✅ Fundação conceitual e modelo de Evento Cognitivo
-- ✅ Persistência operacional Supabase/Postgres
-- ✅ Diário privado operacional
-- ✅ Separação senha humana × credencial interna
-- ✅ Especificação cross-chat Fase 1 aprovada
-- ✅ Plano de implementação cross-chat aprovado
-- ✅ Bootstrap da `main` corrigido e validado
-- ✅ Tarefa 1 — baseline da API
-  - ✅ Deno 2.9.4 validado por checksum
-  - ✅ `deno check supabase/functions/cognitive-ledger-api/index.ts` → exit 0
-- ✅ Tarefa 2 — clientes, auditoria e vetores
-  - ✅ `vector` e `pg_trgm`
-  - ✅ `clientes_autorizados`
-  - ✅ `auditoria_acessos`
-  - ✅ RLS ativo / 0 policies públicas
-  - ✅ `embedding vector(1024)`
-  - ✅ HNSW cosine
-  - ✅ `buscar_eventos_hibrido(...)`
-  - ✅ Security Advisor sem WARN/ERROR novos
-- ✅ Tarefa 3 — OAuth 2.1 do proprietário
-  - ✅ G3 — identidade do proprietário escolhida e confirmada
-  - ✅ JWKS `ES256 / P-256`
-  - ✅ OIDC discovery
-  - ✅ OAuth Server habilitado
-  - ✅ Authorization Path `/oauth/consent`
-  - ✅ Dynamic OAuth Apps habilitado
-  - ✅ dynamic client registration → HTTP 201
-  - ✅ G2 probe end-to-end
-  - ✅ authorization code exchange
-  - ✅ `client_id`, issuer/audience, UserInfo e refresh validados
-- ✅ Tarefa 4 — autorização Bearer por cliente + auditoria fail-closed
-  - ✅ RED válido
-  - ✅ GREEN 9/9
-  - ✅ `/v1/*` exige Bearer e rejeita Basic
-  - ✅ `iss`, `aud`, `exp`, `sub`, `client_id` validados
-  - ✅ owner/capacidades/revogação
-  - ✅ auditoria fail-closed
-  - ✅ Basic legado preservado
-  - ✅ Bearer não ganha escrita
-  - ✅ runtime incluído na Edge Function atualmente implantada
-- ❗ Tarefa 5 — embeddings sem bloquear gravação
-  - ✅ G4 — chave da OpenAI configurada com segurança
-  - ✅ texto determinístico para embeddings
-  - ✅ `text-embedding-3-large` / `dimensions=1024`
-  - ✅ indexação em background sem bloquear gravação
-  - ✅ `/admin/reindexar` Basic-only
-  - ✅ teste de degradação sem quebrar `POST /registros`
-  - ✅ executor privado de backfill
-  - ✅ Edge Function v6 ativa
-  - ✅ diagnóstico seguro do provedor
-  - ❌ backfill: 0/25
-  - ◆ **GATE HUMANO — Saldo/crédito da OpenAI API**
-- ⬜ Tarefa 6 — API de recuperação cross-chat
-- ⬜ Tarefa 7 — MCP remoto tool-only
-- ⬜ Tarefa 8 — deploy MCP + conexão ChatGPT
-- ⬜ Tarefa 9 — Testes A/B + auditoria final
-- ⏸️ Remediação estrutural do histórico público — adiada até validação cross-chat e novo gate
-
-## Evidências principais
-
-### Tarefa 1
-
-- auditoria: `documentacao/auditorias/2026-08-21-tarefa-1-baseline-cross-chat.md`
-- `deno check`: `EXIT 0`
-
-### Tarefa 2
-
-- migration: `supabase/migrations/20260821_cross_chat_fase1.sql`
-- commit da migration: `73fb5fce12e330d04d45e39577172a2592c1903e`
-- auditoria: `documentacao/auditorias/2026-08-22-tarefa-2-schema-cross-chat.md`
-
-### Tarefa 3
-
-- auditoria parcial: `documentacao/auditorias/2026-08-22-tarefa-3-oauth-parcial.md`
-- auditoria final G2: `documentacao/auditorias/2026-08-22-tarefa-3-oauth-g2-final.md`
-- G2 probe: PASS end-to-end
-
-### Tarefa 4
-
-- auditoria: `documentacao/auditorias/2026-08-22-tarefa-4-autorizacao-bearer-auditoria.md`
-- Deno Tarefa 4: `9 passed / 0 failed`
-- runtime incorporado à Edge Function implantada nas versões posteriores
-
-### Tarefa 5
-
-- auditoria: `documentacao/auditorias/2026-08-22-tarefa-5-embeddings-bloqueio-credito.md`
-- Edge Function: versão 6 `ACTIVE`
-- `verify_jwt=false` preservado por autenticação customizada Basic/OAuth
-- testes Deno após instrumentação: `15 passed / 0 failed`
-- teste específico do código estruturado do provedor: `7 passed / 0 failed`
-- executor privado Node: `9 passed / 0 failed`
-- banco antes do backfill: 25 eventos / 0 embeddings
-- backfill real: 0 processados / 25 falhas
-- causa comprovada: `openai_embedding_http_429_credit_balance_exhausted`
-- `COGNITIVE_LEDGER_REINDEXAR_NO_STARTUP=0` após diagnóstico
-
-## ◆ GATE HUMANO — Saldo/crédito da OpenAI API
-
-**AÇÃO NECESSÁRIA**  
-Disponibilizar saldo/crédito utilizável para a conta/projeto OpenAI associado à `OPENAI_API_KEY` configurada no Supabase.
-
-**POR QUE PRECISA DE VOCÊ**  
-O provedor respondeu `credit_balance_exhausted`. Alterar billing, método de pagamento ou aquisição de créditos envolve autoridade financeira do proprietário.
-
-**IMPACTO**  
-Sem saldo disponível, o código de embeddings permanece funcional e testado, mas o backfill real não pode produzir vetores e a Tarefa 5 não pode ser encerrada.
-
-**RETOMADA AUTOMÁTICA APÓS O GATE**  
-Reativar temporariamente o executor → executar backfill → verificar 100% dos embeddings/modelo → desligar executor → fechar Tarefa 5 → iniciar Tarefa 6.
-
-## Regra obrigatória de execução contínua
-
-Enquanto existir plano aprovado e nenhum Gate Humano real tiver sido atingido:
+## Invariantes de aceite
 
 ```text
-executar
-  ↓
-testar
-  ↓
-corrigir
-  ↓
-versionar
-  ↓
-auditar
-  ↓
-sincronizar este checklist + README/checkpoint
-  ↓
-continuar automaticamente
+provedor padrão                 = disabled
+API key sem opt-in              = zero chamadas pagas
+modo lab                        = busca textual
+limite por recuperação          = 12 eventos
+mutação de eventos na leitura   = zero
+auditoria antes da resposta     = obrigatória / fail-closed
+fonte bruta padrão              = negada
+dados do seed                   = exclusivamente sintéticos
+deploy                          = não realizado
 ```
 
-Falha técnica não é Gate Humano. A execução só para por decisão exclusiva do proprietário, segredo/credencial que ele precise fornecer, ação destrutiva/irreversível não autorizada, mudança relevante de arquitetura/escopo ou bloqueio irresolúvel com as ferramentas disponíveis.
+## Evidências locais
 
-## Regra para gates
+| Verificação | Resultado observado |
+| --- | --- |
+| `deno fmt --check` | aprovado |
+| `deno check` da Edge Function | aprovado |
+| testes Deno | 27 aprovados, 0 falhas |
+| testes Node do servidor/exportação | 10 aprovados, 0 falhas |
+| testes MCP, incluindo E2E SDK | 14 aprovados, 0 falhas |
+| auditoria npm de runtime | 0 vulnerabilidades reportadas |
+| banco descartável | 3 eventos, 0 embeddings, fingerprint imutável |
 
-Nunca apresentar apenas um código. Todo gate deve trazer:
+Detalhes e comandos reproduzíveis estão em
+[`../auditorias/2026-08-23-lab-readonly-custo-zero.md`](../auditorias/2026-08-23-lab-readonly-custo-zero.md).
 
-```text
-◆ GATE HUMANO <ID opcional> — <nome>
+## Próxima sequência segura
 
-AÇÃO/DECISÃO NECESSÁRIA:
-...
+1. revisar os commits locais e o contrato das quatro operações;
+2. registrar `cognitive-ledger` no Registry central do MCF;
+3. ligar o adapter read-only do MCF ao MCP em laboratório;
+4. repetir E2E somente com JWT e banco sintéticos;
+5. publicar em lab/staging apenas após revisão explícita;
+6. avaliar conexão com ChatGPT sem habilitar provedor pago;
+7. manter produção e dados reais fechados até autorização própria.
 
-POR QUE PRECISA DE VOCÊ:
-...
+## Gates ainda abertos
 
-IMPACTO:
-...
-```
+### Gate de integração
+
+Exige revisão dos contratos MCF/Capsule, identidade do projeto, URL lab e política
+de capabilities. Não exige compra de API.
+
+### Gate de dados reais
+
+Nenhum dado real deve entrar no seed, CI, MCP lab ou evidência versionada. Abertura
+desse gate exige política de privacidade e autorização separadas.
+
+### Gate de produção
+
+Produção não faz parte desta branch. Deploy, migração de banco live, rotação de
+segredos, DNS e tráfego real precisam de plano e autorização específicos.

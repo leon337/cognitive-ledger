@@ -1,142 +1,116 @@
 # Cognitive Ledger
 
-**Status:** `FASE 1 — CONTINUIDADE CROSS-CHAT / TAREFA 5 BLOQUEADA POR SALDO OPENAI`  
-**Branch operacional ativa:** `design/cognitive-ledger-foundation`
+**Status observado:** `LAB ZERO-COST IMPLEMENTADO LOCALMENTE / AGUARDANDO REVISÃO`
+
+**Branch isolada:** `codex/cognitive-ledger-zero-cost-lab`
+
+**Base:** `origin/design/cognitive-ledger-foundation`
 
 > **Seu pensamento não deve ficar preso ao chat onde aconteceu.**
 
-O Cognitive Ledger é um sistema pessoal de continuidade cognitiva para preservar e recuperar ideias, decisões, aprendizados, hipóteses, projetos e sua evolução ao longo de chats com IA, ferramentas e tempo.
+O Cognitive Ledger preserva e recupera ideias, decisões, aprendizados,
+hipóteses, projetos e suas fontes. Nesta branch, ele também oferece uma fronteira
+cross-chat somente leitura, com busca textual gratuita como comportamento padrão.
+
+Nada desta branch foi publicado, implantado em produção ou conectado a dados reais.
 
 ## Comece aqui
 
 Leia nesta ordem:
 
-1. [`documentacao/roadmaps/checklist-execucao-cross-chat.md`](documentacao/roadmaps/checklist-execucao-cross-chat.md) — estado vivo e canônico;
-2. [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md) — roadmap, arquitetura e runbooks;
-3. [`documentacao/auditorias/2026-08-22-tarefa-5-embeddings-bloqueio-credito.md`](documentacao/auditorias/2026-08-22-tarefa-5-embeddings-bloqueio-credito.md) — evidência mais recente;
-4. [`documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md`](documentacao/principios/2026-08-22-continuidade-e-consciencia-situacional-de-projetos.md) — princípios de bootstrap, timeline e roadmap visual.
+1. [`documentacao/roadmaps/checklist-execucao-cross-chat.md`](documentacao/roadmaps/checklist-execucao-cross-chat.md) — estado atual e próximo passo;
+2. [`documentacao/auditorias/2026-08-23-lab-readonly-custo-zero.md`](documentacao/auditorias/2026-08-23-lab-readonly-custo-zero.md) — escopo, evidências e lacunas do lab;
+3. [`.mcf/project-capsule.yaml`](.mcf/project-capsule.yaml) — Capsule mínima consumível pelo Context Fabric;
+4. [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md) — contexto histórico e arquitetura planejada.
 
-## Fase atual
-
-Objetivo vigente:
-
-> concluir a Fase 1 de acesso cross-chat para que um novo chat autorizado consiga consultar o Cognitive Ledger e recuperar contexto sem depender da conversa original.
-
-Arquitetura-alvo:
+## O que está implementado nesta branch
 
 ```text
-ChatGPT / MCF
-      ↓
-OAuth 2.1
-      ↓
-MCP remoto
-      ↓
-cognitive-ledger-api
-      ↓
-Supabase / Postgres
+Cliente MCF / MCP
+        ↓ Bearer OAuth
+MCP tool-only read-only
+        ↓ mesmo Bearer
+cognitive-ledger-api /v1
+        ↓
+Postgres/Supabase
 ```
 
-A Fase 1 MCP é **somente leitura**.
+- banco local reproduzível com três Eventos Cognitivos sintéticos;
+- busca textual via `pg_trgm`, sem embeddings obrigatórios;
+- quatro rotas de recuperação read-only;
+- capability por operação e auditoria fail-closed;
+- servidor MCP com exatamente quatro ferramentas read-only;
+- Capsule do projeto para descoberta pelo MCF;
+- testes unitários, de integração e E2E locais;
+- CI preparada para repetir o lab com banco descartável.
 
-## Checkpoint atual
+As quatro operações são:
+
+| API | MCP | Capability |
+| --- | --- | --- |
+| `GET /v1/diario` | `ler_diario` | `ler_diario` |
+| `POST /v1/buscar` | `buscar_eventos` | `buscar_eventos` |
+| `POST /v1/contexto` | `recuperar_contexto` | `recuperar_contexto` |
+| `POST /v1/fonte` | `ler_fonte_bruta` | `ler_fonte_bruta` + justificativa |
+
+Clientes novos não recebem `ler_fonte_bruta` por padrão. A resposta privada só é
+liberada depois que a auditoria é persistida; falha da auditoria encerra a leitura
+com erro.
+
+## Regra de custo zero
+
+O provedor de embeddings é `disabled` por padrão. Ter uma `OPENAI_API_KEY` no
+ambiente, isoladamente, não autoriza nenhuma chamada.
+
+O caminho pago só é habilitado por opt-in explícito:
 
 ```text
-✅ Tarefa 1 — baseline da API / deno check exit 0
-✅ Tarefa 2 — clientes, auditoria e vetores
-✅ Tarefa 3 — OAuth 2.1 do proprietário / G2 PASS end-to-end
-✅ Tarefa 4 — Bearer por cliente + auditoria fail-closed
-❗ Tarefa 5 — embeddings / BACKFILL BLOQUEADO POR SALDO OPENAI
-⬜ Tarefa 6 — API de recuperação
-⬜ Tarefa 7 — MCP remoto
-⬜ Tarefa 8 — deploy + ChatGPT
-⬜ Tarefa 9 — Testes A/B + auditoria final
+COGNITIVE_LEDGER_EMBEDDING_PROVIDER=openai
 ```
 
-### Evidência mais recente
+Esse opt-in não faz parte do lab, da CI nem do critério de aceite desta entrega.
+Sem ele, busca e contexto usam o ranking textual local e sinalizam degradação
+semântica quando aplicável.
 
-```text
-Tarefa 5:
-G4 / OPENAI_API_KEY             ✅ resolvido
-text-embedding-3-large / 1024   ✅ implementado
-indexação sem bloquear gravação ✅
-/admin/reindexar Basic-only     ✅
-Edge Function v6                ✅ ACTIVE
-Deno após instrumentação        ✅ 15/15
-executor privado Node           ✅ 9/9
-backfill real                   ❌ 0/25
-causa                           ✅ openai_embedding_http_429_credit_balance_exhausted
-executor automático             ✅ desligado após diagnóstico
+## Como validar localmente
+
+Pré-requisitos: Node.js 22, Deno 2.9.4, PostgreSQL com `pgvector` e `psql`.
+
+```bash
+deno fmt --check supabase/functions/cognitive-ledger-api
+deno check supabase/functions/cognitive-ledger-api/index.ts
+deno test --allow-env supabase/functions/cognitive-ledger-api/testes
+npm --prefix mcp ci --ignore-scripts --no-audit --no-fund
+npm --prefix mcp test
+node --test testes/servidor-diario.test.mjs scripts/testes/exportar-supabase-para-git.test.mjs
 ```
 
-A boundary Bearer da Tarefa 4 está incluída na Edge Function atualmente implantada.
+O banco lab exige confirmação explícita e recusa URLs que não sejam loopback e
+cujo nome de banco não contenha `lab`:
 
-## ◆ GATE HUMANO — Saldo/crédito da OpenAI API
-
-**Ação necessária**  
-Disponibilizar saldo/crédito utilizável para a conta/projeto OpenAI associado à chave configurada no Supabase.
-
-**Por que precisa de você**  
-A API respondeu `credit_balance_exhausted`. Alterar billing, forma de pagamento ou aquisição de créditos é uma decisão financeira do proprietário.
-
-**Impacto**  
-Sem saldo, o código está implementado e testado, mas não é possível gerar embeddings reais, concluir o backfill e fechar a Tarefa 5.
-
-Depois da resolução, a execução deve retomar automaticamente: reativar backfill → validar 100% do corpus → desligar manutenção → fechar Tarefa 5 → iniciar Tarefa 6.
-
-## Fonte operacional de verdade
-
-```text
-Supabase / Postgres
-= diário operacional e Eventos Cognitivos atuais
-
-GitHub
-= código + documentação + histórico + exportação controlada
+```bash
+COGNITIVE_LEDGER_LAB_CONFIRM=1 \
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/cognitive_ledger_lab \
+scripts/validar-banco-lab.sh
 ```
 
-Ler Markdown no Git não equivale a consultar o diário operacional.
+Use somente banco descartável. O seed é sintético e não contém diário pessoal,
+tokens ou credenciais reais.
 
-## Como gravar no diário hoje
+## Limites atuais
 
-```text
-intenção explícita
-→ criar Evento Cognitivo
-→ separar Fonte
-→ criar relações
-→ persistir em registrar_evento_cognitivo(...)
-→ ler de volta
-→ verificar
-→ somente então confirmar
-```
+- nenhuma implantação em lab remoto, staging ou produção foi feita;
+- OAuth real, ChatGPT e MCF ainda não foram exercitados contra este MCP;
+- o Registry central do MCF precisa apontar para a Capsule desta branch após revisão;
+- a qualidade do ranking textual ainda precisa de avaliação com corpus sintético maior;
+- a remediação do histórico público continua adiada e fora deste escopo.
 
-## Como ler o diário hoje
-
-```text
-identificar intenção
-→ consultar Supabase/Postgres
-→ recuperar conjunto relevante
-→ consultar relações quando necessário
-→ preservar tipos epistêmicos
-→ separar MEMÓRIA RECUPERADA de ANÁLISE NOVA
-```
-
-Se a sessão não possuir acesso operacional real, declarar `NÃO DISPONÍVEL / NÃO VERIFICADO`.
-
-## Regra de execução contínua
-
-Enquanto houver plano aprovado e nenhum Gate Humano real:
-
-```text
-executar → testar → corrigir → versionar → auditar → sincronizar checklist/README → continuar
-```
-
-Falha técnica não é Gate Humano.
+Auditorias anteriores que descrevem saldo OpenAI, deploys ou estado remoto são
+evidência histórica. Elas não substituem verificação live e não criam dependência
+financeira para o caminho zero-cost.
 
 ## Privacidade
 
-O repositório está público temporariamente. Não adicionar novos Eventos Cognitivos reais, fontes brutas pessoais, senhas, tokens, API keys, secrets, connection strings, verificadores de autenticação ou dumps privados ao Git público.
-
-A remediação estrutural do histórico público está **adiada, não resolvida**, e depende de novo Gate Humano após a validação cross-chat.
-
-## Relação com o MCF
-
-Cognitive Ledger e MCF continuam projetos distintos. O princípio de continuidade e consciência situacional é transversal, mas sua integração ao runtime do MCF ainda não foi implementada.
+Não adicione Eventos Cognitivos reais, fontes pessoais, senhas, tokens, chaves,
+connection strings, verificadores de autenticação ou dumps ao Git. O repositório
+foi tratado como público durante esta implementação.

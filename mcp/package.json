@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node src/servidor.mjs",
-    "test": "node --test testes/*.test.mjs"
+    "test": "node --test testes/*.test.mjs",
+    "test:real:lab": "node e2e/real-lab.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",

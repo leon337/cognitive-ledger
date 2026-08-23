@@ -1,10 +1,19 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { ErroAuditoria } from "./lib/auditoria.ts";
+import {
+  ErroEntradaRecuperacao,
+  tratarRotaReadOnly,
+} from "./lib/api-readonly.ts";
 import {
   autenticarClienteOAuth,
   ErroAutorizacao,
   tipoBoundary,
 } from "./lib/autorizacao.ts";
-import type { ClaimsOAuth, ClienteAutorizado } from "./lib/contratos.ts";
+import type {
+  ClaimsOAuth,
+  ClienteAutorizado,
+  RepositorioRecuperacao,
+} from "./lib/contratos.ts";
 import {
   agendarIndexacaoSemBloquear,
   codigoErroIndexacaoSeguro,
@@ -29,7 +38,11 @@ function adminClient() {
   });
 }
 
-function json(corpo: unknown, status = 200) {
+function json(
+  corpo: unknown,
+  status = 200,
+  headersAdicionais: Record<string, string> = {},
+) {
   return new Response(JSON.stringify(corpo), {
     status,
     headers: {
@@ -37,6 +50,7 @@ function json(corpo: unknown, status = 200) {
       "Cache-Control": "no-store, private",
       "X-Content-Type-Options": "nosniff",
       "X-Robots-Tag": "noindex, nofollow, noarchive",
+      ...headersAdicionais,
     },
   });
 }
@@ -162,6 +176,17 @@ function respostaErroOAuth(erro: unknown) {
   return json({ erro: "oauth_indisponivel" }, 503);
 }
 
+function respostaErroRecuperacao(erro: unknown) {
+  if (erro instanceof ErroAutorizacao) return respostaErroOAuth(erro);
+  if (erro instanceof ErroEntradaRecuperacao) {
+    return json({ erro: erro.codigo }, erro.status);
+  }
+  if (erro instanceof ErroAuditoria) {
+    return json({ erro: "auditoria_indisponivel" }, 503);
+  }
+  return json({ erro: "recuperacao_indisponivel" }, 503);
+}
+
 function rotulo(id: string) {
   return String(id).replace(/[_-]+/g, " ").replace(
     /\b\w/g,
@@ -253,6 +278,108 @@ function provedorEmbeddingAtual(): ProvedorEmbedding {
   return resolverProvedorEmbedding(
     Deno.env.get("COGNITIVE_LEDGER_EMBEDDING_PROVIDER"),
   );
+}
+
+const CAMPOS_RECUPERACAO = [
+  "id",
+  "timestamp",
+  "tipo",
+  "status",
+  "titulo",
+  "resumo",
+  "contexto",
+  "projetos",
+  "assuntos",
+  "ideias",
+  "decisoes",
+  "hipoteses",
+  "questoes_abertas",
+  "proximos_passos",
+].join(",");
+
+function repositorioRecuperacao(
+  supabase: ReturnType<typeof adminClient>,
+): RepositorioRecuperacao {
+  return {
+    listarEventos: async (filtros) => {
+      let consulta = supabase.from("eventos_cognitivos").select(
+        CAMPOS_RECUPERACAO,
+      ).order("timestamp", { ascending: false });
+      if (filtros.inicio) consulta = consulta.gte("timestamp", filtros.inicio);
+      if (filtros.fim) consulta = consulta.lte("timestamp", filtros.fim);
+      if (filtros.projeto) {
+        consulta = consulta.contains("projetos", [filtros.projeto]);
+      }
+      if (filtros.assuntos.length) {
+        consulta = consulta.overlaps("assuntos", filtros.assuntos);
+      }
+      if (filtros.tipos.length) consulta = consulta.in("tipo", filtros.tipos);
+      const { data, error } = await consulta.limit(filtros.limite);
+      if (error) throw error;
+      return (data || []) as unknown as Array<Record<string, unknown>>;
+    },
+    buscarEventos: async (consulta) => {
+      const { data, error } = await supabase.rpc("buscar_eventos_hibrido", {
+        query_embedding: consulta.queryEmbedding,
+        query_text: consulta.texto,
+        filtro_projetos: consulta.projeto ? [consulta.projeto] : null,
+        filtro_assuntos: consulta.assuntos.length ? consulta.assuntos : null,
+        filtro_tipos: consulta.tipos.length ? consulta.tipos : null,
+        inicio: consulta.inicio,
+        fim: consulta.fim,
+        limite: consulta.limite,
+      });
+      if (error) throw error;
+      return (data || []) as unknown as Array<Record<string, unknown>>;
+    },
+    obterEventosPorIds: async (ids) => {
+      if (!ids.length) return [];
+      const { data, error } = await supabase.from("eventos_cognitivos").select(
+        CAMPOS_RECUPERACAO,
+      ).in("id", ids);
+      if (error) throw error;
+      return (data || []) as unknown as Array<Record<string, unknown>>;
+    },
+    obterRelacoes: async (ids) => {
+      if (!ids.length) return [];
+      const campos = "evento_origem_id,evento_destino_id,tipo,rotulo";
+      const [origens, destinos] = await Promise.all([
+        supabase.from("relacoes").select(campos).in("evento_origem_id", ids),
+        supabase.from("relacoes").select(campos).in("evento_destino_id", ids),
+      ]);
+      if (origens.error || destinos.error) {
+        throw origens.error || destinos.error;
+      }
+      const unicas = new Map<string, Record<string, unknown>>();
+      for (
+        const relacao of [...(origens.data || []), ...(destinos.data || [])]
+      ) {
+        const chave = [
+          relacao.evento_origem_id,
+          relacao.evento_destino_id,
+          relacao.tipo,
+        ].join("|");
+        unicas.set(chave, relacao as Record<string, unknown>);
+      }
+      return [...unicas.values()];
+    },
+    obterFonte: async (eventoId) => {
+      const { data, error } = await supabase.from("fontes").select(
+        "id,evento_id,tipo_de_fonte,provedor,referencia,escopo_da_captura,conteudo_bruto",
+      ).eq("evento_id", eventoId).order("criado_em", { ascending: true }).limit(
+        1,
+      )
+        .maybeSingle();
+      if (error) throw error;
+      return data as Record<string, unknown> | null;
+    },
+    inserirAuditoria: async (registro) => {
+      const { error } = await supabase.from("auditoria_acessos").insert(
+        registro,
+      );
+      if (error) throw error;
+    },
+  };
 }
 
 function dependenciasIndexacao(
@@ -363,17 +490,24 @@ Deno.serve(async (req: Request) => {
       return json({ erro: "oauth_indisponivel" }, 503);
     }
     try {
-      await autenticarClienteOAuth(req, {
+      const identidade = await autenticarClienteOAuth(req, {
         ownerId,
         issuer: `${supabaseUrl}/auth/v1`,
         verificarJwt: (token) => verificarJwtSupabase(token, supabase),
         obterCliente: (clientId) => obterClienteOAuth(supabase, clientId),
         registrarCliente: (entrada) => registrarClienteOAuth(supabase, entrada),
       });
+      const provedor = provedorEmbeddingAtual();
+      const resultado = await tratarRotaReadOnly(req, identidade, {
+        repositorio: repositorioRecuperacao(supabase),
+        provedorEmbedding: provedor,
+        gerarEmbeddingConsulta: (texto) => gerarEmbedding(texto, { provedor }),
+      });
+      if (!resultado) return json({ erro: "rota_nao_encontrada" }, 404);
+      return json(resultado.corpo, resultado.status, resultado.headers);
     } catch (erro) {
-      return respostaErroOAuth(erro);
+      return respostaErroRecuperacao(erro);
     }
-    return json({ erro: "rota_nao_encontrada" }, 404);
   }
 
   if (!(await autorizado(req, supabase))) return naoAutorizado();

@@ -2,7 +2,7 @@
 
 **Atualizado em:** 2026-08-23
 
-**Estado:** `LAB ZERO-COST IMPLEMENTADO LOCALMENTE / NÃO IMPLANTADO`
+**Estado:** `REAL READ-ONLY LAB E2E PASS / NÃO IMPLANTADO`
 
 **Branch:** `codex/cognitive-ledger-zero-cost-lab`
 
@@ -20,10 +20,13 @@ estado live de Supabase, Render, VPS, Vercel, ChatGPT ou produção.
 - ✅ Auditoria fail-closed ocorre antes da liberação do conteúdo privado.
 - ✅ Fonte bruta exige capability adicional e justificativa.
 - ✅ Rotas mutantes são negadas na fronteira `/v1` read-only.
+- ✅ O path real prefixado da Edge Function é normalizado sem reabrir `/v1/admin`.
 - ✅ MCP expõe exatamente quatro ferramentas, todas marcadas read-only.
 - ✅ Capsule mínima do Cognitive Ledger foi adicionada para o MCF.
 - ✅ Testes provam zero chamada paga no modo lab e zero mutação de Eventos.
-- ✅ CI cria o diretório do Deno e repete Node, Deno, MCP e banco descartável.
+- ✅ Supabase CLI 2.115.0, usuário e JWT ES256 são reproduzíveis e sintéticos.
+- ✅ E2E real SDK MCP → Edge local → Auth/Postgres/pgvector passou nas quatro leituras.
+- ✅ CI cria o diretório do Deno e repete Node, Deno, MCP e o E2E real descartável.
 - ⬜ Revisão independente da branch.
 - ⬜ Registro do projeto no Registry central do MCF.
 - ⬜ E2E integrado MCF → MCP → API → banco lab.
@@ -65,10 +68,11 @@ deploy                          = não realizado
 | --- | --- |
 | `deno fmt --check` | aprovado |
 | `deno check` da Edge Function | aprovado |
-| testes Deno | 27 aprovados, 0 falhas |
+| testes Deno | 29 aprovados, 0 falhas |
 | testes Node do servidor/exportação | 10 aprovados, 0 falhas |
 | testes MCP, incluindo E2E SDK | 14 aprovados, 0 falhas |
-| auditoria npm de runtime | 0 vulnerabilidades reportadas |
+| E2E real MCP SDK → Edge → Postgres | 4 leituras, 4 auditorias, 0 chamadas pagas |
+| auditoria npm de MCP e ferramentas lab | 0 vulnerabilidades reportadas |
 | banco descartável | 3 eventos, 0 embeddings, fingerprint imutável |
 
 Detalhes e comandos reproduzíveis estão em
@@ -78,8 +82,8 @@ Detalhes e comandos reproduzíveis estão em
 
 1. revisar os commits locais e o contrato das quatro operações;
 2. registrar `cognitive-ledger` no Registry central do MCF;
-3. ligar o adapter read-only do MCF ao MCP em laboratório;
-4. repetir E2E somente com JWT e banco sintéticos;
+3. implementar o cliente Streamable HTTP do adapter read-only no MCF;
+4. repetir o E2E incluindo o adapter MCF, sempre com JWT e banco sintéticos;
 5. publicar em lab/staging apenas após revisão explícita;
 6. avaliar conexão com ChatGPT sem habilitar provedor pago;
 7. manter produção e dados reais fechados até autorização própria.

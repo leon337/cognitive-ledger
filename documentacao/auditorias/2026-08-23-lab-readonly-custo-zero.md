@@ -13,7 +13,8 @@
 O caminho mínimo de recuperação cross-chat foi implementado em laboratório com
 busca textual gratuita, autenticação/capability, auditoria fail-closed, quatro
 rotas read-only e um servidor MCP tool-only. O caminho pago de embeddings existe
-apenas como opção explícita e permanece desativado no lab.
+apenas como opção explícita e permanece desativado no lab. Um E2E real exerceu o
+SDK MCP, a Edge Function local, Supabase Auth e PostgreSQL/pgvector descartável.
 
 ## Mudanças rastreáveis
 
@@ -25,6 +26,11 @@ apenas como opção explícita e permanece desativado no lab.
 | `e8495f7` | MCP tool-only e testes E2E com o SDK oficial |
 | `4866dc5` | fechamento da fronteira exata `/v1/admin` |
 | `38583b3` | CI zero-cost incluindo banco descartável |
+| `b45be98` | Capsule, README e checkpoint inicial do lab |
+| `f4cff51` | normalização fail-closed do prefixo real da Edge Function |
+| `7709d5b` | Supabase CLI fixada e OAuth/JWT sintético reproduzível |
+| `96e1777` | E2E real MCP SDK → Edge → Auth/Postgres |
+| `5442f30` | job CI do E2E real descartável |
 
 O commit que contém esta auditoria e a Capsule deve ser identificado pelo HEAD da
 branch revisada; ele não referencia o próprio SHA para evitar evidência circular.
@@ -54,12 +60,15 @@ a auditoria falhar, a API responde com falha e não libera o conteúdo.
 - o E2E da API injeta um gerador pago-espião e comprova contador igual a zero;
 - os testes Deno são executados sem permissão `--allow-net` de runtime;
 - o seed contém zero embeddings e a busca SQL retorna resultado via `pg_trgm`;
-- o E2E MCP usa apenas servidores HTTP locais e dados sintéticos.
+- o E2E real remove `OPENAI_API_KEY` dos processos filhos e usa somente serviços
+  locais, JWT ES256 e dados sintéticos;
+- a saída observada registrou `chamadas_pagas: 0` e `embeddings: 0`.
 
 ## Evidência de imutabilidade
 
 - o E2E da API compara o JSON dos Eventos antes e depois das quatro operações;
-- o E2E MCP compara o mesmo fingerprint e observa somente as quatro rotas de leitura;
+- o E2E real calcula o fingerprint SQL dos Eventos antes e depois das quatro
+  chamadas do SDK MCP;
 - o validador PostgreSQL calcula MD5 determinístico das linhas antes e depois dos
   testes SQL e falha se houver diferença;
 - a única escrita autorizada no fluxo de leitura é em `auditoria_acessos`.
@@ -73,23 +82,35 @@ deno test --allow-env supabase/functions/cognitive-ledger-api/testes
 node --test testes/servidor-diario.test.mjs scripts/testes/exportar-supabase-para-git.test.mjs
 npm --prefix mcp test
 npm --prefix mcp audit --omit=dev
+npm --prefix tools/lab audit --omit=dev
 COGNITIVE_LEDGER_LAB_CONFIRM=1 DATABASE_URL=<loopback-lab> scripts/validar-banco-lab.sh
+npm --prefix tools/lab ci --no-audit --no-fund
+COGNITIVE_LEDGER_LAB_CONFIRM=1 npm --prefix mcp run test:real:lab
 ```
 
 Resultados observados:
 
-- Deno: 27 aprovados, 0 falhas;
+- Deno: 29 aprovados, 0 falhas;
 - Node servidor/exportação: 10 aprovados, 0 falhas;
 - MCP: 14 aprovados, 0 falhas;
-- auditoria npm: 0 vulnerabilidades reportadas;
-- PostgreSQL: 3 eventos sintéticos, 0 embeddings, fingerprint imutável.
+- auditorias npm de MCP e ferramentas lab: 0 vulnerabilidades reportadas;
+- PostgreSQL: 3 eventos sintéticos, 0 embeddings, fingerprint imutável;
+- E2E real: quatro tools, quatro auditorias, zero chamadas pagas e Eventos
+  imutáveis.
+
+O E2E usa `StreamableHTTPClientTransport` do SDK oficial, não um fake de API. O
+JWT é assinado por uma chave ES256 gerada para o lab, validado por GoTrue em
+`/auth/v1/user` e depois revalidado pelo MCP via JWKS. A Edge Runtime consulta o
+PostgREST e o PostgreSQL reais da stack local. O projeto e a chave vivem em um
+diretório temporário e são removidos depois que a stack é encerrada.
 
 ## Lacunas e gates
 
 - não houve push, merge, deploy, alteração de VPS/Vercel/Supabase ou uso de segredo real;
-- OAuth/JWKS real e capabilities reais não foram exercitados nesta branch;
+- o fluxo browser OAuth authorization-code + PKCE não foi exercitado; Auth,
+  JWT/JWKS e capabilities foram exercitados com identidade sintética;
 - o Registry central e o adapter do MCF ainda precisam consumir a Capsule;
-- falta E2E integrado MCF → MCP → API → Postgres usando somente fixtures;
+- falta somente incluir o adapter MCF no E2E já comprovado de MCP → API → Postgres;
 - a qualidade de relevância do ranking textual ainda precisa de benchmark sintético;
 - a migration base foi desenhada para banco lab vazio e não deve ser aplicada a um
   banco live sem plano de reconciliação independente;

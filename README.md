@@ -1,6 +1,6 @@
 # Cognitive Ledger
 
-**Status observado:** `LAB ZERO-COST IMPLEMENTADO LOCALMENTE / AGUARDANDO REVISÃO`
+**Status observado:** `REAL READ-ONLY LAB E2E PASS / AGUARDANDO ADAPTER MCF`
 
 **Branch isolada:** `codex/cognitive-ledger-zero-cost-lab`
 
@@ -19,9 +19,10 @@ Nada desta branch foi publicado, implantado em produção ou conectado a dados r
 Leia nesta ordem:
 
 1. [`documentacao/roadmaps/checklist-execucao-cross-chat.md`](documentacao/roadmaps/checklist-execucao-cross-chat.md) — estado atual e próximo passo;
-2. [`documentacao/auditorias/2026-08-23-lab-readonly-custo-zero.md`](documentacao/auditorias/2026-08-23-lab-readonly-custo-zero.md) — escopo, evidências e lacunas do lab;
-3. [`.mcf/project-capsule.yaml`](.mcf/project-capsule.yaml) — Capsule mínima consumível pelo Context Fabric;
-4. [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md) — contexto histórico e arquitetura planejada.
+2. [`documentacao/integracao/mcf-mcp-readonly-lab.md`](documentacao/integracao/mcf-mcp-readonly-lab.md) — contrato exato para o adapter do MCF;
+3. [`documentacao/auditorias/2026-08-23-lab-readonly-custo-zero.md`](documentacao/auditorias/2026-08-23-lab-readonly-custo-zero.md) — escopo, evidências e lacunas do lab;
+4. [`.mcf/project-capsule.yaml`](.mcf/project-capsule.yaml) — Capsule mínima consumível pelo Context Fabric;
+5. [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md) — contexto histórico e arquitetura planejada.
 
 ## O que está implementado nesta branch
 
@@ -41,8 +42,9 @@ Postgres/Supabase
 - capability por operação e auditoria fail-closed;
 - servidor MCP com exatamente quatro ferramentas read-only;
 - Capsule do projeto para descoberta pelo MCF;
-- testes unitários, de integração e E2E locais;
-- CI preparada para repetir o lab com banco descartável.
+- testes unitários e E2E real MCP SDK → Edge Runtime → Postgres/pgvector;
+- Supabase CLI fixada e identidade/JWT ES256 exclusivamente sintéticos;
+- CI preparada para repetir todo o lab descartável.
 
 As quatro operações são:
 
@@ -97,10 +99,25 @@ scripts/validar-banco-lab.sh
 Use somente banco descartável. O seed é sintético e não contém diário pessoal,
 tokens ou credenciais reais.
 
+Para subir e provar o caminho completo real, incluindo Auth, Edge Function, MCP
+e Postgres/pgvector descartáveis:
+
+```bash
+npm --prefix mcp ci --ignore-scripts --no-audit --no-fund
+npm --prefix tools/lab ci --no-audit --no-fund
+COGNITIVE_LEDGER_LAB_CONFIRM=1 npm --prefix mcp run test:real:lab
+```
+
+O harness remove `OPENAI_API_KEY` do ambiente dos processos filhos, cria a
+identidade e o JWT apenas no lab, valida as quatro leituras e encerra/remove o
+stack ao final. O contrato e os shapes estão em
+[`documentacao/integracao/mcf-mcp-readonly-lab.md`](documentacao/integracao/mcf-mcp-readonly-lab.md).
+
 ## Limites atuais
 
 - nenhuma implantação em lab remoto, staging ou produção foi feita;
-- OAuth real, ChatGPT e MCF ainda não foram exercitados contra este MCP;
+- o fluxo browser OAuth authorization-code + PKCE, ChatGPT e o adapter MCF ainda
+  não foram exercitados; JWT/JWKS e Supabase Auth locais foram exercitados;
 - o Registry central do MCF precisa apontar para a Capsule desta branch após revisão;
 - a qualidade do ranking textual ainda precisa de avaliação com corpus sintético maior;
 - a remediação do histórico público continua adiada e fora deste escopo.

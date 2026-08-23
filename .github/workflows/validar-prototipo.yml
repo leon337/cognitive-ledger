@@ -83,3 +83,30 @@ jobs:
 
       - name: Validar estrutura do protótipo
         run: node site/testes/validar-estrutura.mjs
+
+  validar_e2e_real:
+    name: E2E real MCP → Edge → PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      COGNITIVE_LEDGER_LAB_CONFIRM: "1"
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            mcp/package-lock.json
+            tools/lab/package-lock.json
+
+      - name: Instalar MCP e Supabase CLI fixada
+        run: |
+          npm --prefix mcp ci --ignore-scripts --no-audit --no-fund
+          npm --prefix tools/lab ci --no-audit --no-fund
+
+      - name: Provar caminho read-only real e custo zero
+        run: npm --prefix mcp run test:real:lab

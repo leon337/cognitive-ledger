@@ -1,0 +1,19 @@
+{
+  "name": "@cognitive-ledger/mcp-readonly",
+  "version": "0.1.0-lab",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/servidor.mjs",
+    "test": "node --test testes/*.test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "express": "5.2.1",
+    "jose": "6.2.10",
+    "zod": "4.4.3"
+  }
+}

@@ -3,6 +3,7 @@ import {
   autenticarClienteOAuth,
   ErroAutorizacao,
   exigirCapacidade,
+  normalizarPathnameAplicacao,
   tipoBoundary,
 } from "../lib/autorizacao.ts";
 
@@ -137,8 +138,20 @@ Deno.test("cliente inativo ou sem capacidade recebe 403; revogar A nao afeta B",
 
 Deno.test("boundary /v1 e OAuth; timeline/registros permanecem Basic legado", () => {
   assertEquals(tipoBoundary("/v1/diario"), "oauth");
+  assertEquals(
+    tipoBoundary("/cognitive-ledger-api/v1/diario"),
+    "oauth",
+  );
+  assertEquals(
+    normalizarPathnameAplicacao("/cognitive-ledger-api/v1/contexto"),
+    "/v1/contexto",
+  );
   assertEquals(tipoBoundary("/timeline"), "legacy");
   assertEquals(tipoBoundary("/registros"), "legacy");
+  assertEquals(
+    tipoBoundary("/outro-prefixo/cognitive-ledger-api/v1/diario"),
+    "legacy",
+  );
 });
 
 Deno.test("claims obrigatorias iss aud exp sub e client_id sao validadas", async () => {

@@ -24,8 +24,21 @@ const CAPACIDADES_PADRAO = [
   "recuperar_contexto",
 ];
 
+const PREFIXO_EDGE_FUNCTION = "/cognitive-ledger-api";
+
+export function normalizarPathnameAplicacao(pathname: string): string {
+  if (pathname === PREFIXO_EDGE_FUNCTION) return "/";
+  if (pathname.startsWith(`${PREFIXO_EDGE_FUNCTION}/`)) {
+    return pathname.slice(PREFIXO_EDGE_FUNCTION.length);
+  }
+  return pathname;
+}
+
 export function tipoBoundary(pathname: string): "oauth" | "legacy" {
-  return pathname === "/v1" || pathname.startsWith("/v1/") ? "oauth" : "legacy";
+  const normalizado = normalizarPathnameAplicacao(pathname);
+  return normalizado === "/v1" || normalizado.startsWith("/v1/")
+    ? "oauth"
+    : "legacy";
 }
 
 function extrairBearer(req: Request) {

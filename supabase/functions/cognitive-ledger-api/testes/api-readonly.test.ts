@@ -187,6 +187,64 @@ Deno.test("as quatro rotas são read-only e o modo textual não chama provedor p
   assertEquals(auditorias[3]?.fonte_bruta_acessada, true);
 });
 
+Deno.test("prefixo real da Edge Function preserva as quatro rotas e fecha admin", async () => {
+  const { eventos, auditorias, repositorio } = criarRepositorio();
+  const antes = JSON.stringify(eventos);
+  const deps = { repositorio, provedorEmbedding: "disabled" as const };
+
+  const diario = await tratarRotaReadOnly(
+    new Request("http://localhost:54331/cognitive-ledger-api/v1/diario"),
+    identidade(),
+    deps,
+  );
+  const busca = await tratarRotaReadOnly(
+    post("/cognitive-ledger-api/v1/buscar", { texto: "busca textual" }),
+    identidade(),
+    deps,
+  );
+  const contexto = await tratarRotaReadOnly(
+    post("/cognitive-ledger-api/v1/contexto", { objetivo: "retomar projeto" }),
+    identidade(),
+    deps,
+  );
+  const fonte = await tratarRotaReadOnly(
+    post("/cognitive-ledger-api/v1/fonte", {
+      evento_id: "ec-lab-001",
+      justificativa: "teste prefixado",
+    }),
+    identidade([
+      "ler_diario",
+      "buscar_eventos",
+      "recuperar_contexto",
+      "ler_fonte_bruta",
+    ]),
+    deps,
+  );
+
+  assertEquals(
+    [diario?.status, busca?.status, contexto?.status, fonte?.status],
+    [
+      200,
+      200,
+      200,
+      200,
+    ],
+  );
+  assertEquals(auditorias.length, 4);
+  assertEquals(JSON.stringify(eventos), antes);
+
+  const admin = await assertRejects(
+    () =>
+      tratarRotaReadOnly(
+        post("/cognitive-ledger-api/v1/admin", {}),
+        identidade(),
+        deps,
+      ),
+    ErroAutorizacao,
+  ) as ErroAutorizacao;
+  assertEquals(admin.codigo, "ROTA_MUTANTE_NEGADA");
+});
+
 Deno.test("fonte bruta é negada ao cliente padrão", async () => {
   const { repositorio } = criarRepositorio();
   const erro = await assertRejects(

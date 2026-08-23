@@ -1,5 +1,9 @@
 import { auditarLeitura } from "./auditoria.ts";
-import { ErroAutorizacao, exigirCapacidade } from "./autorizacao.ts";
+import {
+  ErroAutorizacao,
+  exigirCapacidade,
+  normalizarPathnameAplicacao,
+} from "./autorizacao.ts";
 import type {
   FiltrosRecuperacao,
   IdentidadeLeitura,
@@ -253,7 +257,7 @@ export async function tratarRotaReadOnly(
   deps: DependenciasApiReadOnly,
 ): Promise<ResultadoHttp | null> {
   const url = new URL(req.url);
-  const pathname = url.pathname;
+  const pathname = normalizarPathnameAplicacao(url.pathname);
 
   if (
     pathname === "/v1/registros" || pathname === "/v1/admin" ||

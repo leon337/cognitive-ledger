@@ -7,6 +7,7 @@ import {
 import {
   autenticarClienteOAuth,
   ErroAutorizacao,
+  resolverIssuerOAuth,
   tipoBoundary,
 } from "./lib/autorizacao.ts";
 import type {
@@ -490,9 +491,13 @@ Deno.serve(async (req: Request) => {
       return json({ erro: "oauth_indisponivel" }, 503);
     }
     try {
+      const issuer = resolverIssuerOAuth(
+        supabaseUrl,
+        Deno.env.get("COGNITIVE_LEDGER_OAUTH_ISSUER"),
+      );
       const identidade = await autenticarClienteOAuth(req, {
         ownerId,
-        issuer: `${supabaseUrl}/auth/v1`,
+        issuer,
         verificarJwt: (token) => verificarJwtSupabase(token, supabase),
         obterCliente: (clientId) => obterClienteOAuth(supabase, clientId),
         registrarCliente: (entrada) => registrarClienteOAuth(supabase, entrada),

@@ -15,6 +15,17 @@ major_version = 17
 enabled = true
 sql_paths = ["./seed.sql"]
 
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+external_url = "http://localhost:54331/auth/v1"
+jwt_issuer = "http://localhost:54331/auth/v1"
+enable_signup = false
+
+[auth.oauth_server]
+enabled = true
+authorization_url_path = "/oauth/consent"
+allow_dynamic_registration = false
+
 [functions.cognitive-ledger-api]
 verify_jwt = false
-

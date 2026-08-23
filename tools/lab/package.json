@@ -1,0 +1,17 @@
+{
+  "name": "@cognitive-ledger/lab-tools",
+  "version": "0.1.0-lab",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "supabase": "supabase --workdir ../..",
+    "start": "supabase --workdir ../.. start",
+    "status": "supabase --workdir ../.. status",
+    "stop": "supabase --workdir ../.. stop --no-backup"
+  },
+  "devDependencies": {
+    "supabase": "2.115.0"
+  }
+}

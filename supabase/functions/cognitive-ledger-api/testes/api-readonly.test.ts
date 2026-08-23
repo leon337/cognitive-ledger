@@ -249,6 +249,17 @@ Deno.test("consulta vazia, JSON inválido e rota mutante falham fechado", async 
   ) as ErroAutorizacao;
   assertEquals(mutante.codigo, "ROTA_MUTANTE_NEGADA");
 
+  const admin = await assertRejects(
+    () =>
+      tratarRotaReadOnly(
+        post("/v1/admin", {}),
+        identidade(),
+        { repositorio, provedorEmbedding: "disabled" },
+      ),
+    ErroAutorizacao,
+  ) as ErroAutorizacao;
+  assertEquals(admin.codigo, "ROTA_MUTANTE_NEGADA");
+
   const desconhecida = await tratarRotaReadOnly(
     new Request("https://ledger.test/v1/desconhecida"),
     identidade(),

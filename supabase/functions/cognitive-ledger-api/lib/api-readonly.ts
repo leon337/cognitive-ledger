@@ -255,7 +255,10 @@ export async function tratarRotaReadOnly(
   const url = new URL(req.url);
   const pathname = url.pathname;
 
-  if (pathname === "/v1/registros" || pathname.startsWith("/v1/admin/")) {
+  if (
+    pathname === "/v1/registros" || pathname === "/v1/admin" ||
+    pathname.startsWith("/v1/admin/")
+  ) {
     throw new ErroAutorizacao(403, "ROTA_MUTANTE_NEGADA");
   }
 

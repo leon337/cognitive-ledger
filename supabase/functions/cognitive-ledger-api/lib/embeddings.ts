@@ -1,6 +1,25 @@
 export const MODELO_EMBEDDING = "text-embedding-3-large:1024";
 const MODELO_API = "text-embedding-3-large";
 const DIMENSOES = 1024;
+export const PROVEDOR_EMBEDDING_PADRAO = "disabled" as const;
+
+export type ProvedorEmbedding = "disabled" | "openai";
+
+/**
+ * Embeddings pagos são estritamente opt-in. Qualquer valor ausente ou
+ * desconhecido mantém o modo textual local e não autoriza tráfego externo.
+ */
+export function resolverProvedorEmbedding(
+  valor?: string | null,
+): ProvedorEmbedding {
+  return valor?.trim().toLowerCase() === "openai"
+    ? "openai"
+    : PROVEDOR_EMBEDDING_PADRAO;
+}
+
+export function embeddingsHabilitados(provedor: ProvedorEmbedding): boolean {
+  return provedor === "openai";
+}
 
 function texto(valor: unknown): string {
   if (valor === null || valor === undefined) return "";
@@ -31,11 +50,16 @@ export function textoParaEmbedding(evento: Record<string, unknown>): string {
 export type DependenciasEmbedding = {
   apiKey?: string;
   fetcher?: typeof fetch;
+  provedor?: ProvedorEmbedding;
 };
 export async function gerarEmbedding(
   textoEntrada: string,
   deps: DependenciasEmbedding = {},
 ): Promise<number[]> {
+  const provedor = deps.provedor ?? PROVEDOR_EMBEDDING_PADRAO;
+  if (!embeddingsHabilitados(provedor)) {
+    throw new Error("embedding_provider_disabled");
+  }
   const apiKey = deps.apiKey ?? Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) throw new Error("openai_api_key_ausente");
   const fetcher = deps.fetcher ?? fetch;
@@ -58,7 +82,8 @@ export async function gerarEmbedding(
       const erroCorpo = await resposta.json();
       const candidato = erroCorpo?.error?.code || erroCorpo?.error?.type;
       if (typeof candidato === "string") {
-        const seguro = candidato.toLowerCase().replace(/[^a-z0-9_]+/g, "_").slice(0, 48);
+        const seguro = candidato.toLowerCase().replace(/[^a-z0-9_]+/g, "_")
+          .slice(0, 48);
         if (seguro) detalhe = seguro;
       }
     } catch {
@@ -101,7 +126,9 @@ export async function indexarEvento(
       embeddingAtualizadoEm: new Date().toISOString(),
     });
   } catch (erro) {
-    console.error(`embedding_persistencia_falha:${codigoErroIndexacaoSeguro(erro)}`);
+    console.error(
+      `embedding_persistencia_falha:${codigoErroIndexacaoSeguro(erro)}`,
+    );
     throw erro;
   }
 }
@@ -118,10 +145,20 @@ export function agendarIndexacaoSemBloquear<T>(
 
 export function codigoErroIndexacaoSeguro(erro: unknown): string {
   if (erro instanceof Error) {
-    if (/^openai_embedding_http_\d{3}_[a-z0-9_]{1,48}$/.test(erro.message)) return erro.message;
-    if (["openai_api_key_ausente", "embedding_dimensao_invalida"].includes(erro.message)) return erro.message;
+    if (/^openai_embedding_http_\d{3}_[a-z0-9_]{1,48}$/.test(erro.message)) {
+      return erro.message;
+    }
+    if (
+      [
+        "embedding_provider_disabled",
+        "openai_api_key_ausente",
+        "embedding_dimensao_invalida",
+      ].includes(erro.message)
+    ) return erro.message;
   }
   const codigo = (erro as { code?: unknown })?.code;
-  if (typeof codigo === "string" && /^[A-Z0-9_]{2,12}$/.test(codigo)) return `db_${codigo}`;
+  if (typeof codigo === "string" && /^[A-Z0-9_]{2,12}$/.test(codigo)) {
+    return `db_${codigo}`;
+  }
   return "erro_indexacao_desconhecido";
 }

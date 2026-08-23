@@ -24,8 +24,39 @@ const CAPACIDADES_PADRAO = [
   "recuperar_contexto",
 ];
 
+const PREFIXO_EDGE_FUNCTION = "/cognitive-ledger-api";
+
+export function normalizarPathnameAplicacao(pathname: string): string {
+  if (pathname === PREFIXO_EDGE_FUNCTION) return "/";
+  if (pathname.startsWith(`${PREFIXO_EDGE_FUNCTION}/`)) {
+    return pathname.slice(PREFIXO_EDGE_FUNCTION.length);
+  }
+  return pathname;
+}
+
+export function resolverIssuerOAuth(
+  supabaseUrl: string,
+  issuerConfigurado?: string,
+): string {
+  const candidato = issuerConfigurado ||
+    `${supabaseUrl.replace(/\/$/, "")}/auth/v1`;
+  const url = new URL(candidato);
+  const loopback = ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+  if (
+    (url.protocol !== "https:" && !(loopback && url.protocol === "http:")) ||
+    url.username || url.password || url.search || url.hash ||
+    url.pathname.replace(/\/$/, "") !== "/auth/v1"
+  ) {
+    throw new Error("OAUTH_ISSUER_INVALIDO");
+  }
+  return url.toString().replace(/\/$/, "");
+}
+
 export function tipoBoundary(pathname: string): "oauth" | "legacy" {
-  return pathname === "/v1" || pathname.startsWith("/v1/") ? "oauth" : "legacy";
+  const normalizado = normalizarPathnameAplicacao(pathname);
+  return normalizado === "/v1" || normalizado.startsWith("/v1/")
+    ? "oauth"
+    : "legacy";
 }
 
 function extrairBearer(req: Request) {

@@ -56,7 +56,11 @@ Deno.test("pacote preserva tipos epistemicos e só conflito explícito", () => {
     [eventoBase as Record<string, unknown>],
     [
       { evento_origem_id: "ec-1", evento_destino_id: "ec-2", tipo: "revisa" },
-      { evento_origem_id: "ec-1", evento_destino_id: "ec-3", tipo: "relacionado" },
+      {
+        evento_origem_id: "ec-1",
+        evento_destino_id: "ec-3",
+        tipo: "relacionado",
+      },
     ],
     true,
   );

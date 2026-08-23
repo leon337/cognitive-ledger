@@ -1,4 +1,4 @@
-name: Validar protótipo estrutural
+name: Validar laboratório zero-cost
 
 on:
   push:
@@ -13,14 +13,40 @@ permissions:
 jobs:
   validar:
     runs-on: ubuntu-latest
+    env:
+      COGNITIVE_LEDGER_EMBEDDING_PROVIDER: disabled
+      COGNITIVE_LEDGER_LAB_CONFIRM: "1"
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cognitive_ledger_lab
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: cognitive_ledger_lab
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cognitive_ledger_lab"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Baixar repositório
         uses: actions/checkout@v4
+
+      - name: Preparar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
 
       - name: Instalar Deno 2.9.4 com checksum
         run: |
           curl -fsSLo /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.4/deno-x86_64-unknown-linux-gnu.zip
           printf '%s  %s\n' 'c24f955d9fbfe0ea5ae2b501c8e71ae76e31e4c9782390a54a284b3364fda725' '/tmp/deno.zip' | sha256sum -c -
+          mkdir -p "$HOME/.local/bin"
           unzip -q /tmp/deno.zip -d "$HOME/.local/bin"
           printf '%s\n' "$HOME/.local/bin" >> "$GITHUB_PATH"
 
@@ -28,7 +54,27 @@ jobs:
         run: deno --version
 
       - name: Validar Edge Function com Deno
-        run: deno check supabase/functions/cognitive-ledger-api/index.ts
+        run: |
+          deno fmt --check supabase/functions/cognitive-ledger-api
+          deno check supabase/functions/cognitive-ledger-api/index.ts
+          deno test --allow-env supabase/functions/cognitive-ledger-api/testes
+
+      - name: Instalar dependências fixadas do MCP
+        run: npm --prefix mcp ci --ignore-scripts --no-audit --no-fund
+
+      - name: Validar API privada, exportação e MCP
+        run: |
+          node --test testes/servidor-diario.test.mjs scripts/testes/exportar-supabase-para-git.test.mjs
+          npm --prefix mcp test
+
+      - name: Preparar papéis sintéticos do banco lab
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "create role anon nologin;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "create role authenticated nologin;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "create role service_role nologin;"
+
+      - name: Validar banco descartável e imutabilidade dos Eventos
+        run: scripts/validar-banco-lab.sh
 
       - name: Validar sintaxe JavaScript
         run: |
@@ -37,3 +83,30 @@ jobs:
 
       - name: Validar estrutura do protótipo
         run: node site/testes/validar-estrutura.mjs
+
+  validar_e2e_real:
+    name: E2E real MCP → Edge → PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      COGNITIVE_LEDGER_LAB_CONFIRM: "1"
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            mcp/package-lock.json
+            tools/lab/package-lock.json
+
+      - name: Instalar MCP e Supabase CLI fixada
+        run: |
+          npm --prefix mcp ci --ignore-scripts --no-audit --no-fund
+          npm --prefix tools/lab ci --no-audit --no-fund
+
+      - name: Provar caminho read-only real e custo zero
+        run: npm --prefix mcp run test:real:lab

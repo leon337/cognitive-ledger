@@ -1,0 +1,31 @@
+project_id = "cognitive-ledger-lab"
+
+[api]
+enabled = true
+port = 54331
+schemas = ["public", "extensions"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54332
+major_version = 17
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+external_url = "http://localhost:54331/auth/v1"
+jwt_issuer = "http://localhost:54331/auth/v1"
+enable_signup = false
+
+[auth.oauth_server]
+enabled = true
+authorization_url_path = "/oauth/consent"
+allow_dynamic_registration = false
+
+[functions.cognitive-ledger-api]
+verify_jwt = false

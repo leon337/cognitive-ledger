@@ -1,9 +1,12 @@
 import { assertEquals, assertRejects } from "jsr:@std/assert";
 import {
-  gerarEmbedding,
   codigoErroIndexacaoSeguro,
+  embeddingsHabilitados,
+  gerarEmbedding,
   indexarEvento,
   MODELO_EMBEDDING,
+  PROVEDOR_EMBEDDING_PADRAO,
+  resolverProvedorEmbedding,
   textoParaEmbedding,
 } from "../lib/embeddings.ts";
 
@@ -45,6 +48,7 @@ Deno.test("gerarEmbedding usa text-embedding-3-large com 1024 dimensões", async
   let corpo: any = null;
   const vetor = Array.from({ length: 1024 }, (_, i) => i / 1024);
   const resultado = await gerarEmbedding("texto", {
+    provedor: "openai",
     apiKey: "teste",
     fetcher: async (_url: string | URL | Request, init?: RequestInit) => {
       corpo = JSON.parse(String(init?.body));
@@ -64,6 +68,7 @@ Deno.test("gerarEmbedding falha fechado se vetor não tiver 1024 dimensões", as
   await assertRejects(
     () =>
       gerarEmbedding("texto", {
+        provedor: "openai",
         apiKey: "teste",
         fetcher: async () =>
           new Response(JSON.stringify({ data: [{ embedding: [1, 2, 3] }] }), {
@@ -109,18 +114,64 @@ Deno.test("falha de indexação pode ser absorvida sem alterar resultado da grav
 });
 
 Deno.test("normaliza erro de indexação sem expor conteúdo", () => {
-  assertEquals(codigoErroIndexacaoSeguro(new Error("openai_embedding_http_401_invalid_api_key")), "openai_embedding_http_401_invalid_api_key");
-  assertEquals(codigoErroIndexacaoSeguro({ code: "22P02", message: "sensível" }), "db_22P02");
-  assertEquals(codigoErroIndexacaoSeguro(new Error("detalhe potencialmente sensível")), "erro_indexacao_desconhecido");
+  assertEquals(
+    codigoErroIndexacaoSeguro(
+      new Error("openai_embedding_http_401_invalid_api_key"),
+    ),
+    "openai_embedding_http_401_invalid_api_key",
+  );
+  assertEquals(
+    codigoErroIndexacaoSeguro({ code: "22P02", message: "sensível" }),
+    "db_22P02",
+  );
+  assertEquals(
+    codigoErroIndexacaoSeguro(new Error("detalhe potencialmente sensível")),
+    "erro_indexacao_desconhecido",
+  );
 });
 
 Deno.test("preserva código estruturado seguro do provedor em erro 429", async () => {
   await assertRejects(
-    () => gerarEmbedding("texto", {
-      apiKey: "teste",
-      fetcher: async () => new Response(JSON.stringify({ error: { type: "insufficient_quota", code: "insufficient_quota" } }), { status: 429, headers: { "content-type": "application/json" } }),
-    }),
+    () =>
+      gerarEmbedding("texto", {
+        provedor: "openai",
+        apiKey: "teste",
+        fetcher: async () =>
+          new Response(
+            JSON.stringify({
+              error: { type: "insufficient_quota", code: "insufficient_quota" },
+            }),
+            { status: 429, headers: { "content-type": "application/json" } },
+          ),
+      }),
     Error,
     "openai_embedding_http_429_insufficient_quota",
   );
+});
+
+Deno.test("modo textual é padrão e valores desconhecidos não habilitam provedor pago", () => {
+  assertEquals(resolverProvedorEmbedding(undefined), PROVEDOR_EMBEDDING_PADRAO);
+  assertEquals(resolverProvedorEmbedding("local"), "disabled");
+  assertEquals(resolverProvedorEmbedding("OPENAI"), "openai");
+  assertEquals(
+    embeddingsHabilitados(resolverProvedorEmbedding(undefined)),
+    false,
+  );
+});
+
+Deno.test("api key isolada não autoriza chamada paga sem opt-in explícito", async () => {
+  let chamadas = 0;
+  await assertRejects(
+    () =>
+      gerarEmbedding("texto", {
+        apiKey: "nao-basta",
+        fetcher: async () => {
+          chamadas += 1;
+          return new Response("{}", { status: 200 });
+        },
+      }),
+    Error,
+    "embedding_provider_disabled",
+  );
+  assertEquals(chamadas, 0);
 });

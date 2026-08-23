@@ -1,8 +1,10 @@
-import { assertEquals, assertRejects } from "jsr:@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "jsr:@std/assert";
 import {
   autenticarClienteOAuth,
   ErroAutorizacao,
   exigirCapacidade,
+  normalizarPathnameAplicacao,
+  resolverIssuerOAuth,
   tipoBoundary,
 } from "../lib/autorizacao.ts";
 
@@ -137,8 +139,48 @@ Deno.test("cliente inativo ou sem capacidade recebe 403; revogar A nao afeta B",
 
 Deno.test("boundary /v1 e OAuth; timeline/registros permanecem Basic legado", () => {
   assertEquals(tipoBoundary("/v1/diario"), "oauth");
+  assertEquals(
+    tipoBoundary("/cognitive-ledger-api/v1/diario"),
+    "oauth",
+  );
+  assertEquals(
+    normalizarPathnameAplicacao("/cognitive-ledger-api/v1/contexto"),
+    "/v1/contexto",
+  );
   assertEquals(tipoBoundary("/timeline"), "legacy");
   assertEquals(tipoBoundary("/registros"), "legacy");
+  assertEquals(
+    tipoBoundary("/outro-prefixo/cognitive-ledger-api/v1/diario"),
+    "legacy",
+  );
+});
+
+Deno.test("issuer OAuth aceita HTTPS ou override loopback e rejeita origem insegura", () => {
+  assertEquals(
+    resolverIssuerOAuth("https://example.supabase.co/"),
+    "https://example.supabase.co/auth/v1",
+  );
+  assertEquals(
+    resolverIssuerOAuth(
+      "http://kong:8000",
+      "http://localhost:54331/auth/v1",
+    ),
+    "http://localhost:54331/auth/v1",
+  );
+  assertThrows(
+    () => resolverIssuerOAuth("http://supabase.example"),
+    Error,
+    "OAUTH_ISSUER_INVALIDO",
+  );
+  assertThrows(
+    () =>
+      resolverIssuerOAuth(
+        "http://kong:8000",
+        "http://localhost:54331/auth/v1?enganoso=1",
+      ),
+    Error,
+    "OAUTH_ISSUER_INVALIDO",
+  );
 });
 
 Deno.test("claims obrigatorias iss aud exp sub e client_id sao validadas", async () => {

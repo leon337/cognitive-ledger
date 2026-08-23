@@ -7,12 +7,26 @@ export function limiteSeguro(valor?: number): number {
 }
 
 const CAMPOS_EVENTO = [
-  "id", "timestamp", "tipo", "status", "titulo", "resumo", "contexto",
-  "projetos", "assuntos", "ideias", "decisoes", "hipoteses",
-  "questoes_abertas", "proximos_passos",
+  "id",
+  "timestamp",
+  "tipo",
+  "status",
+  "titulo",
+  "resumo",
+  "contexto",
+  "projetos",
+  "assuntos",
+  "ideias",
+  "decisoes",
+  "hipoteses",
+  "questoes_abertas",
+  "proximos_passos",
+  "proveniencia_basica",
 ] as const;
 
-export function projetarEvento(evento: Record<string, unknown>): Record<string, unknown> {
+export function projetarEvento(
+  evento: Record<string, unknown>,
+): Record<string, unknown> {
   const saida: Record<string, unknown> = {};
   for (const campo of CAMPOS_EVENTO) {
     if (campo in evento) saida[campo] = evento[campo];
@@ -38,9 +52,7 @@ function juntarStrings(
   campo: string,
 ): string[] {
   return eventos.flatMap((evento) =>
-    Array.isArray(evento[campo])
-      ? (evento[campo] as unknown[]).map(String)
-      : []
+    Array.isArray(evento[campo]) ? (evento[campo] as unknown[]).map(String) : []
   );
 }
 export function construirPacoteContexto(
@@ -57,13 +69,18 @@ export function construirPacoteContexto(
       tipo: String(r.tipo || ""),
     }));
   return {
-    estado: eventos.length ? "ok" : "evidencia_insuficiente",
+    estado: !eventos.length
+      ? "evidencia_insuficiente"
+      : conflitos.length
+      ? "conflito_de_contexto"
+      : "ok",
     degradado,
-    memorias: eventos.map(projetarEvento),
+    eventos: eventos.map(projetarEvento),
     decisoes: juntarStrings(eventos, "decisoes"),
     hipoteses: juntarStrings(eventos, "hipoteses"),
     questoes_abertas: juntarStrings(eventos, "questoes_abertas"),
     proximos_passos: juntarStrings(eventos, "proximos_passos"),
+    lacunas: eventos.length ? [] : ["nenhum_evento_relevante"],
     conflitos,
   };
 }

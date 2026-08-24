@@ -1,18 +1,38 @@
 # Contrato de Integração — MCF → Cognitive Ledger Read-Only Lab
 
-**Estado observado:** `REAL_READONLY_LAB_E2E_PASS_AWAITING_MCF_ADAPTER`
+**Estado observado:** `REAL_MCF_APPMODULE_READONLY_LAB_E2E_PASS__DISCONNECTED_INACTIVE`
 
 **Transporte MCP:** Streamable HTTP, resposta JSON, stateless, somente `POST`.
 
-**Dados e identidade:** exclusivamente sintéticos; sem deploy e sem chave de IA.
+**Dados e identidade do gate:** exclusivamente sintéticos; sem Ledger remoto,
+OAuth live, produção, dados reais ou chave de IA.
 
-Este é o contrato mínimo que o adapter do MCF deve consumir. O MCF não deve
+Este é o contrato consumido pelo adapter read-only do MCF. O MCF não deve
 acessar Postgres, PostgREST, service role, Basic legado ou a Edge Function
 diretamente. O caminho normal é:
 
 ```text
 MCF → POST /mcp → MCP tool-only → Edge Function /v1 → Postgres/pgvector
 ```
+
+## Evidência pós-integração MCF
+
+- provider testado no feature tree `b882d2808af74858a6ba351fb755bb3843e33ab2`
+  e integrado em `design/cognitive-ledger-foundation` pela PR #2, merge
+  `e0e715b0105abe0bc636d198e7ebb137d7de9bd7`;
+- adapter integrado em `main` do MCF pela PR #160, merge
+  `efe5164290d56f22023f07de073e2ad7c027fb95`;
+- staging do MCF aprovado no SHA exato do merge pelo run `32685810702`;
+- caminho real comprovado: AppModule → MCP → Edge/Auth → PostgREST → PostgreSQL
+  17/pgvector;
+- 3 operações MCF aprovadas e 3 auditorias geradas; `ler_fonte_bruta` bloqueada
+  antes do MCP;
+- 3 Eventos antes/depois, 0 embeddings, 0 chamadas pagas e 0 persistência do
+  payload de memória no MCF.
+
+O lab foi desmontado. A capability permanece `DISCONNECTED`, `INACTIVE`,
+`HISTORICALLY_VERIFIED` e `LIVE_REQUIRED`. O staging acima qualifica o SHA do
+MCF; não prova conexão live com o Ledger e não autoriza OAuth ou produção.
 
 ## Transporte MCP
 
@@ -313,5 +333,7 @@ fingerprint Eventos antes = fingerprint Eventos depois
 ```
 
 Esse teste cobre JWT real contra o Auth local e JWKS ES256. Ele não simula API,
-Postgres ou MCP. O fluxo browser authorization-code + PKCE e o adapter MCF ainda
-são gates separados.
+Postgres ou MCP. O gate cross-repo acrescentou o AppModule MCF real e restringiu
+o consumidor às três operações descritas acima. O adapter MCF não está mais
+pendente; browser authorization-code + PKCE, OAuth live, ChatGPT e produção
+continuam sendo gates separados e não autorizados.

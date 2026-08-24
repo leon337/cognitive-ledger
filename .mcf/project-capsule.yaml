@@ -8,15 +8,15 @@ purpose: >-
 lifecycle: ACTIVE
 
 snapshot:
-  current_workstream: zero-cost-readonly-cross-chat-lab
-  current_status: REAL_READONLY_LAB_E2E_PASS_AWAITING_MCF_ADAPTER
-  next_action: Register this Capsule and implement the MCF Streamable HTTP read-only adapter
+  current_workstream: zero-cost-readonly-mcf-integration
+  current_status: REAL_MCF_APPMODULE_READONLY_LAB_E2E_PASS__PR2_AND_PR160_MERGED__STAGING_EXACT_SHA_PASS__DISCONNECTED_INACTIVE
+  next_action: Keep cognitive-ledger.memory.read disconnected and inactive until a separate human gate authorizes live OAuth or production connectivity
   blockers:
-    - The default branch remains a bootstrap while implementation lives on the design lineage
+    - The default branch remains a bootstrap while implementation lives on design/cognitive-ledger-foundation
     - Public-history privacy remediation remains deferred and outside this laboratory scope
-    - MCF Registry wiring and the MCF adapter have not yet been completed
+    - Live OAuth, remote provider connectivity, and production remain unauthorized and unverified; the proven path used synthetic disposable laboratory credentials
 
 sources:
   current_state: README.md
 
-observed_at: "2026-08-23T04:18:38-03:00"
+observed_at: "2026-08-24T03:23:23Z"

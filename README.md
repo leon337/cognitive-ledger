@@ -1,39 +1,51 @@
 # Cognitive Ledger
 
-**Status observado:** `REAL READ-ONLY LAB E2E PASS / AGUARDANDO ADAPTER MCF`
+**Status observado:** `REAL MCF APPMODULE READ-ONLY LAB E2E PASS / DISCONNECTED / INACTIVE`
 
-**Branch isolada:** `codex/cognitive-ledger-zero-cost-lab`
+**Linha de implementação:** `design/cognitive-ledger-foundation`
 
-**Base:** `origin/design/cognitive-ledger-foundation`
+**Provider integrado:** PR [#2](https://github.com/leon337/cognitive-ledger/pull/2),
+merge `e0e715b0105abe0bc636d198e7ebb137d7de9bd7`, feature tree
+`b882d2808af74858a6ba351fb755bb3843e33ab2`
+
+**Adapter MCF integrado:** PR
+[#160](https://github.com/leon337/multiagent-collaboration-framework/pull/160),
+merge `efe5164290d56f22023f07de073e2ad7c027fb95`,
+[staging exact SHA aprovado](https://github.com/leon337/multiagent-collaboration-framework/actions/runs/32685810702)
 
 > **Seu pensamento não deve ficar preso ao chat onde aconteceu.**
 
 O Cognitive Ledger preserva e recupera ideias, decisões, aprendizados,
-hipóteses, projetos e suas fontes. Nesta branch, ele também oferece uma fronteira
-cross-chat somente leitura, com busca textual gratuita como comportamento padrão.
+hipóteses, projetos e suas fontes. Na linha de implementação, ele também oferece
+uma fronteira cross-chat somente leitura, com busca textual gratuita como
+comportamento padrão.
 
-Nada desta branch foi publicado, implantado em produção ou conectado a dados reais.
+O provider foi integrado somente em `design/cognitive-ledger-foundation`; `main`
+continua sendo um bootstrap. O adapter está em `main` do MCF e seu SHA exato passou
+em staging, mas a conexão com o Ledger foi desmontada após o lab: a capability
+continua `DISCONNECTED`, `INACTIVE` e `LIVE_REQUIRED`. Nenhum Ledger remoto,
+OAuth live, produção ou dado real foi autorizado.
 
 ## Comece aqui
 
 Leia nesta ordem:
 
 1. [`documentacao/roadmaps/checklist-execucao-cross-chat.md`](documentacao/roadmaps/checklist-execucao-cross-chat.md) — estado atual e próximo passo;
-2. [`documentacao/integracao/mcf-mcp-readonly-lab.md`](documentacao/integracao/mcf-mcp-readonly-lab.md) — contrato exato para o adapter do MCF;
+2. [`documentacao/integracao/mcf-mcp-readonly-lab.md`](documentacao/integracao/mcf-mcp-readonly-lab.md) — contrato e evidência exatos do adapter do MCF;
 3. [`documentacao/auditorias/2026-08-23-lab-readonly-custo-zero.md`](documentacao/auditorias/2026-08-23-lab-readonly-custo-zero.md) — escopo, evidências e lacunas do lab;
 4. [`.mcf/project-capsule.yaml`](.mcf/project-capsule.yaml) — Capsule mínima consumível pelo Context Fabric;
 5. [`documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md`](documentacao/roadmaps/2026-08-21-roadmap-continuidade-cross-chat.md) — contexto histórico e arquitetura planejada.
 
-## O que está implementado nesta branch
+## O que está implementado na linha de design
 
 ```text
-Cliente MCF / MCP
-        ↓ Bearer OAuth
+AppModule MCF / adapter read-only
+        ↓ MCP Streamable HTTP + Bearer OAuth
 MCP tool-only read-only
         ↓ mesmo Bearer
 cognitive-ledger-api /v1
-        ↓
-Postgres/Supabase
+        ↓ PostgREST
+PostgreSQL 17/pgvector
 ```
 
 - banco local reproduzível com três Eventos Cognitivos sintéticos;
@@ -45,6 +57,12 @@ Postgres/Supabase
 - testes unitários e E2E real MCP SDK → Edge Runtime → Postgres/pgvector;
 - Supabase CLI fixada e identidade/JWT ES256 exclusivamente sintéticos;
 - CI preparada para repetir todo o lab descartável.
+
+O E2E integrado externo a este repositório comprovou o caminho real
+AppModule → MCP → Edge/Auth → PostgREST → PostgreSQL. O consumidor MCF liberou
+somente `ler_diario`, `buscar_eventos` e `recuperar_contexto`, bloqueou
+`ler_fonte_bruta` antes do MCP e observou 3 operações, 3 auditorias, 0 embeddings,
+0 chamadas pagas e 0 persistência do payload de memória no MCF.
 
 As quatro operações são:
 
@@ -115,10 +133,12 @@ stack ao final. O contrato e os shapes estão em
 
 ## Limites atuais
 
-- nenhuma implantação em lab remoto, staging ou produção foi feita;
-- o fluxo browser OAuth authorization-code + PKCE, ChatGPT e o adapter MCF ainda
-  não foram exercitados; JWT/JWKS e Supabase Auth locais foram exercitados;
-- o Registry central do MCF precisa apontar para a Capsule desta branch após revisão;
+- nenhuma implantação remota do Cognitive Ledger em lab, staging ou produção foi feita;
+- o fluxo browser OAuth authorization-code + PKCE, ChatGPT e uma conexão live não
+  foram exercitados; JWT/JWKS, Supabase Auth local e o adapter pelo AppModule MCF
+  foram exercitados apenas com credenciais sintéticas descartáveis;
+- o Registry central já registra o projeto e `cognitive-ledger.memory.read`, mas a
+  capability permanece `DISCONNECTED`, `INACTIVE` e exige verificação live;
 - a qualidade do ranking textual ainda precisa de avaliação com corpus sintético maior;
 - a remediação do histórico público continua adiada e fora deste escopo.
 

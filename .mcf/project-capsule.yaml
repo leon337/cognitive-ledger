@@ -12,7 +12,7 @@ snapshot:
   current_status: DESIGN_LINEAGE_QUALIFIED__MAIN_PROMOTION_REQUIRES_CLEAN_RECONCILIATION__DISCONNECTED_INACTIVE
   next_action: Reconcile the design lineage with main on a clean promotion branch, keep the read capability disconnected, and require CI before any human merge decision
   blockers:
-    - Promotion from origin/design/cognitive-ledger-foundation@a64cfc05f83567f624bbda70288310f56a7264e8 to origin/main@f95bcddd165afa34708c682d5ce11f810375dc04 is 9 commits behind and 171 commits ahead, with an unresolved README conflict in draft PR #1
+    - Promotion from origin/design/cognitive-ledger-foundation@a64cfc05f83567f624bbda70288310f56a7264e8 to origin/main@f95bcddd165afa34708c682d5ce11f810375dc04 is 9 commits behind and 171 commits ahead, with an unresolved README conflict in draft PR 1
     - Zero-cost acceptance requires COGNITIVE_LEDGER_EMBEDDING_PROVIDER=disabled and COGNITIVE_LEDGER_REINDEXAR_NO_STARTUP=0; the opt-in OpenAI path remains prohibited
     - Public-history privacy remediation remains deferred and outside this laboratory scope
     - Live OAuth, remote provider connectivity, and production remain unauthorized and unverified; the proven path used synthetic disposable laboratory credentials

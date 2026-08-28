@@ -8,15 +8,16 @@ purpose: >-
 lifecycle: ACTIVE
 
 snapshot:
-  current_workstream: zero-cost-readonly-mcf-integration
-  current_status: REAL_MCF_APPMODULE_READONLY_LAB_E2E_PASS__PR2_AND_PR160_MERGED__STAGING_EXACT_SHA_PASS__DISCONNECTED_INACTIVE
-  next_action: Keep cognitive-ledger.memory.read disconnected and inactive until a separate human gate authorizes live OAuth or production connectivity
+  current_workstream: safe-main-promotion-gate-sync
+  current_status: DESIGN_LINEAGE_QUALIFIED__MAIN_PROMOTION_REQUIRES_CLEAN_RECONCILIATION__DISCONNECTED_INACTIVE
+  next_action: Reconcile the design lineage with main on a clean promotion branch, keep the read capability disconnected, and require CI before any human merge decision
   blockers:
-    - The default branch remains a bootstrap while implementation lives on design/cognitive-ledger-foundation
+    - Promotion from origin/design/cognitive-ledger-foundation@a64cfc05f83567f624bbda70288310f56a7264e8 to origin/main@f95bcddd165afa34708c682d5ce11f810375dc04 is 9 commits behind and 171 commits ahead, with an unresolved README conflict in draft PR 1
+    - Zero-cost acceptance requires COGNITIVE_LEDGER_EMBEDDING_PROVIDER=disabled and COGNITIVE_LEDGER_REINDEXAR_NO_STARTUP=0; the opt-in OpenAI path remains prohibited
     - Public-history privacy remediation remains deferred and outside this laboratory scope
     - Live OAuth, remote provider connectivity, and production remain unauthorized and unverified; the proven path used synthetic disposable laboratory credentials
 
 sources:
   current_state: README.md
 
-observed_at: "2026-08-24T03:23:23Z"
+observed_at: "2026-08-28T14:25:48-03:00"

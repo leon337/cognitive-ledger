@@ -4,10 +4,7 @@ import {
   ErroEntradaRecuperacao,
   tratarRotaReadOnly,
 } from "./lib/api-readonly.ts";
-import {
-  ErroMemoriaWrite,
-  tratarRotaWrite,
-} from "./lib/api-write.ts";
+import { ErroMemoriaWrite, tratarRotaWrite } from "./lib/api-write.ts";
 import {
   autenticarClienteOAuth,
   ErroAutorizacao,
@@ -423,7 +420,9 @@ function repositorioMemoriaWrite(
       return data as Record<string, unknown> | null;
     },
     inserirAuditoria: async (registro: Record<string, unknown>) => {
-      const { error } = await supabase.from("auditoria_acessos").insert(registro);
+      const { error } = await supabase.from("auditoria_acessos").insert(
+        registro,
+      );
       if (error) throw error;
     },
   };
@@ -554,15 +553,20 @@ Deno.serve(async (req: Request) => {
         repositorio: repositorioMemoriaWrite(supabase),
       });
       if (escrita) {
-        const receipt = escrita.corpo.receipt as Record<string, unknown> | undefined;
-        const eventoId = typeof receipt?.evento_id === "string" ? receipt.evento_id : null;
+        const receipt = escrita.corpo.receipt as
+          | Record<string, unknown>
+          | undefined;
+        const eventoId = typeof receipt?.evento_id === "string"
+          ? receipt.evento_id
+          : null;
         if (eventoId && embeddingsHabilitados(provedor)) {
           agendarIndexacaoSemBloquear(
             escrita.corpo,
-            () => indexarEvento(
-              eventoId,
-              dependenciasIndexacao(supabase, provedor),
-            ),
+            () =>
+              indexarEvento(
+                eventoId,
+                dependenciasIndexacao(supabase, provedor),
+              ),
             waitUntilRuntime,
           );
         }

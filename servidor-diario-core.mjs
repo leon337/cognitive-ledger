@@ -1,6 +1,7 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import { timingSafeEqual } from "node:crypto";
 
 const tipos = {
   ".html": "text/html; charset=utf-8",
@@ -43,6 +44,16 @@ function autorizado(req, usuario, validarAcesso) {
 
 function criarAutorizacao(usuario, valor) {
   return `Basic ${Buffer.from(`${usuario}:${valor}`).toString("base64")}`;
+}
+
+function autorizadoMcf(req, tokenEsperado) {
+  if (!tokenEsperado) return false;
+  const cabecalho = req.headers.authorization || "";
+  if (!cabecalho.startsWith("Bearer ")) return false;
+  const recebido = Buffer.from(cabecalho.slice(7), "utf8");
+  const esperado = Buffer.from(tokenEsperado, "utf8");
+  if (recebido.length !== esperado.length) return false;
+  return timingSafeEqual(recebido, esperado);
 }
 
 const cspPrivada = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
@@ -125,7 +136,7 @@ export async function reindexarApi({ usuario, credencialApi, apiUrl, limite = 10
   };
 }
 
-export function criarServidor({ pastaPublica, usuario, validarAcesso, credencialApi, apiUrl, supabaseUrl, supabasePublishableKey, fetchImpl = fetch }) {
+export function criarServidor({ pastaPublica, usuario, validarAcesso, credencialApi, apiUrl, supabaseUrl, supabasePublishableKey, cognitiveMemoryToken = null, fetchImpl = fetch }) {
   if (!pastaPublica || !usuario || typeof validarAcesso !== "function" || !credencialApi || !apiUrl || !supabaseUrl || !supabasePublishableKey) {
     throw new Error("configuração obrigatória do servidor ausente");
   }
@@ -141,12 +152,65 @@ export function criarServidor({ pastaPublica, usuario, validarAcesso, credencial
   })});\n`;
 
   return http.createServer(async (req, res) => {
+    const url = new URL(req.url || "/", "http://localhost");
+
+    if (
+      url.pathname === "/internal/mcf-memory/timeline" ||
+      url.pathname === "/internal/mcf-memory/registros"
+    ) {
+      if (!autorizadoMcf(req, cognitiveMemoryToken)) {
+        res.writeHead(401, headersPrivados({
+          "Content-Type": "application/json; charset=utf-8",
+          "WWW-Authenticate": 'Bearer realm="MCF Cognitive Memory"'
+        }));
+        res.end(JSON.stringify({ erro: "nao_autorizado" }));
+        return;
+      }
+      const rotaTimeline = url.pathname.endsWith("/timeline");
+      const metodoEsperado = rotaTimeline ? "GET" : "POST";
+      if (req.method !== metodoEsperado) {
+        res.writeHead(405, headersPrivados({
+          "Content-Type": "application/json; charset=utf-8",
+          Allow: metodoEsperado
+        }));
+        res.end(JSON.stringify({ erro: "metodo_nao_permitido" }));
+        return;
+      }
+      try {
+        const corpo = rotaTimeline ? undefined : await lerCorpo(req);
+        const upstream = await fetchImpl(
+          `${apiBase}/${rotaTimeline ? "timeline" : "registros"}`,
+          {
+            method: metodoEsperado,
+            headers: {
+              Authorization: authorizationApi,
+              Accept: "application/json",
+              ...(req.headers["content-type"]
+                ? { "Content-Type": req.headers["content-type"] }
+                : {})
+            },
+            body: corpo
+          }
+        );
+        const resposta = Buffer.from(await upstream.arrayBuffer());
+        res.writeHead(upstream.status, headersPrivados({
+          "Content-Type": upstream.headers.get("content-type") ||
+            "application/json; charset=utf-8"
+        }));
+        res.end(resposta);
+      } catch {
+        res.writeHead(502, headersPrivados({
+          "Content-Type": "application/json; charset=utf-8"
+        }));
+        res.end(JSON.stringify({ erro: "provider_indisponivel" }));
+      }
+      return;
+    }
+
     if (!autorizado(req, usuario, validarAcesso)) {
       responderNaoAutorizado(res);
       return;
     }
-
-    const url = new URL(req.url || "/", "http://localhost");
 
     if (url.pathname === "/oauth/config.js") {
       if (req.method !== "GET") {

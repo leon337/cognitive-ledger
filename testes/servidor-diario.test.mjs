@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { once } from "node:events";
 import { criarServidor, reindexarApi, verificarApi } from "../servidor-diario-core.mjs";
+import { executarSmokeMemoriaMcf } from "../scripts/mcf-cognitive-memory-live-smoke.mjs";
 
 const basic = (usuario, valor) => `Basic ${Buffer.from(`${usuario}:${valor}`).toString("base64")}`;
 const autorizacaoSite = basic("leandro", "site");
@@ -24,6 +25,7 @@ async function iniciar(opcoes = {}) {
     apiUrl: "https://api.exemplo/cognitive-ledger-api",
     supabaseUrl: "https://projeto.supabase.co",
     supabasePublishableKey: "public-test-key",
+    cognitiveMemoryToken: "mcf-machine-token",
     ...opcoes
   });
   servidor.listen(0, "127.0.0.1");
@@ -152,4 +154,138 @@ test("reindexa via endpoint Basic interno sem usar credencial humana", async () 
   assert.notEqual(chamada.opcoes.headers.Authorization, autorizacaoSite);
   assert.deepEqual(JSON.parse(chamada.opcoes.body), { limite: 7 });
   assert.deepEqual(resultado, { processados: 7, falhas: 0, restantes_estimados: 2, erros: {} });
+});
+
+
+test("smoke MCF grava e lê de volta sem expor credencial", async () => {
+  const chamadas = [];
+  const registros = [];
+  const fetchImpl = async (url, opcoes) => {
+    chamadas.push({ url: String(url), opcoes });
+    if (String(url).endsWith("/registros")) {
+      const corpo = JSON.parse(opcoes.body);
+      registros.push(corpo.evento);
+      return new Response(JSON.stringify({ status: "criado", id: corpo.evento.id }), {
+        status: 201,
+        headers: { "content-type": "application/json" }
+      });
+    }
+    return new Response(JSON.stringify({ registros }), {
+      status: 200,
+      headers: { "content-type": "application/json" }
+    });
+  };
+  const resultado = await executarSmokeMemoriaMcf({
+    usuario: "leandro",
+    credencialApi: "segredo-interno",
+    apiUrl: "https://api.exemplo/cognitive-ledger-api",
+    eventId: "ec-mcf-memory-e2e-20260918-001",
+    timestamp: "2026-09-18T21:15:00-03:00",
+    fetchImpl
+  });
+  assert.equal(resultado.status, "PASS");
+  assert.equal(resultado.provider_status, "criado");
+  assert.equal(resultado.read_back_verified, true);
+  assert.equal(resultado.event_sha256.length, 64);
+  assert.equal(chamadas.length, 2);
+  assert.match(chamadas[0].opcoes.headers.Authorization, /^Basic /);
+  assert.doesNotMatch(JSON.stringify(resultado), /segredo-interno/);
+});
+
+test("smoke MCF falha fechado quando read-back não encontra o evento", async () => {
+  const fetchImpl = async (url, opcoes) => {
+    if (String(url).endsWith("/registros")) {
+      const corpo = JSON.parse(opcoes.body);
+      return new Response(JSON.stringify({ status: "criado", id: corpo.evento.id }), {
+        status: 201,
+        headers: { "content-type": "application/json" }
+      });
+    }
+    return new Response(JSON.stringify({ registros: [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" }
+    });
+  };
+  await assert.rejects(
+    executarSmokeMemoriaMcf({
+      usuario: "leandro",
+      credencialApi: "segredo-interno",
+      apiUrl: "https://api.exemplo/cognitive-ledger-api",
+      eventId: "ec-mcf-memory-e2e-20260918-002",
+      timestamp: "2026-09-18T21:16:00-03:00",
+      fetchImpl
+    }),
+    /read_back_live_evento_ausente/
+  );
+});
+
+
+test("nega boundary MCF com bearer incorreto", async () => {
+  let chamadas = 0;
+  const app = await iniciar({
+    fetchImpl: async () => {
+      chamadas += 1;
+      return new Response("{}", { status: 200 });
+    }
+  });
+  try {
+    const resposta = await fetch(`${app.base}/internal/mcf-memory/timeline`, {
+      headers: { Authorization: "Bearer errado" }
+    });
+    assert.equal(resposta.status, 401);
+    assert.equal(chamadas, 0);
+    assert.deepEqual(await resposta.json(), { erro: "nao_autorizado" });
+  } finally { app.limpar(); }
+});
+
+test("boundary MCF encaminha write com credencial interna separada", async () => {
+  let chamada;
+  const app = await iniciar({
+    fetchImpl: async (url, opcoes) => {
+      chamada = { url: String(url), opcoes };
+      return new Response(JSON.stringify({ status: "criado", id: "ec-x" }), {
+        status: 201,
+        headers: { "content-type": "application/json" }
+      });
+    }
+  });
+  try {
+    const resposta = await fetch(`${app.base}/internal/mcf-memory/registros`, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer mcf-machine-token",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ evento: { id: "ec-x" }, fontes: [], relacoes: [] })
+    });
+    assert.equal(resposta.status, 201);
+    assert.equal(chamada.url, "https://api.exemplo/cognitive-ledger-api/registros");
+    assert.equal(chamada.opcoes.headers.Authorization, autorizacaoApi);
+    assert.notEqual(chamada.opcoes.headers.Authorization, "Bearer mcf-machine-token");
+    assert.deepEqual(await resposta.json(), { status: "criado", id: "ec-x" });
+  } finally { app.limpar(); }
+});
+
+test("boundary MCF encaminha read-back com token de máquina", async () => {
+  let chamada;
+  const app = await iniciar({
+    fetchImpl: async (url, opcoes) => {
+      chamada = { url: String(url), opcoes };
+      return new Response(JSON.stringify({ registros: [{ id: "ec-x" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" }
+      });
+    }
+  });
+  try {
+    const resposta = await fetch(`${app.base}/internal/mcf-memory/timeline`, {
+      headers: { Authorization: "Bearer mcf-machine-token" }
+    });
+    assert.equal(resposta.status, 200);
+    assert.equal(chamada.url, "https://api.exemplo/cognitive-ledger-api/timeline");
+    assert.equal(chamada.opcoes.headers.Authorization, autorizacaoApi);
+    const corpo = await resposta.text();
+    assert.match(corpo, /ec-x/);
+    assert.doesNotMatch(corpo, /mcf-machine-token/);
+  } finally { app.limpar(); }
 });

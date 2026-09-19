@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { criarServidor, reindexarApi, verificarApi } from "./servidor-diario-core.mjs";
 import { validarAcesso } from "./acesso-diario.mjs";
+import { executarSmokeMemoriaMcf } from "./scripts/mcf-cognitive-memory-live-smoke.mjs";
 
 const raiz = path.dirname(fileURLToPath(import.meta.url));
 const pastaPublica = path.join(raiz, ".gerado", "site-privado");
@@ -23,6 +24,26 @@ try {
 } catch (erro) {
   console.error(`Falha no smoke test da API: ${erro.message}`);
   process.exit(1);
+}
+
+if (process.env.MCF_COGNITIVE_MEMORY_E2E_ENABLE === "1") {
+  try {
+    const resultado = await executarSmokeMemoriaMcf({
+      usuario,
+      credencialApi,
+      apiUrl,
+      eventId: process.env.MCF_COGNITIVE_MEMORY_E2E_ID,
+      timestamp: process.env.MCF_COGNITIVE_MEMORY_E2E_TIMESTAMP
+    });
+    console.log(
+      `MCF_COGNITIVE_MEMORY_E2E status=${resultado.status} ` +
+      `event_id=${resultado.event_id} provider_status=${resultado.provider_status} ` +
+      `read_back_verified=${resultado.read_back_verified} event_sha256=${resultado.event_sha256}`
+    );
+  } catch (erro) {
+    console.error(`MCF_COGNITIVE_MEMORY_E2E status=FAIL error=${erro.message}`);
+    process.exit(1);
+  }
 }
 
 if (process.env.COGNITIVE_LEDGER_REINDEXAR_NO_STARTUP === "1") {

@@ -25,6 +25,7 @@ async function iniciar(opcoes = {}) {
     apiUrl: "https://api.exemplo/cognitive-ledger-api",
     supabaseUrl: "https://projeto.supabase.co",
     supabasePublishableKey: "public-test-key",
+    cognitiveMemoryToken: "mcf-machine-token",
     ...opcoes
   });
   servidor.listen(0, "127.0.0.1");
@@ -216,4 +217,75 @@ test("smoke MCF falha fechado quando read-back não encontra o evento", async ()
     }),
     /read_back_live_evento_ausente/
   );
+});
+
+
+test("nega boundary MCF com bearer incorreto", async () => {
+  let chamadas = 0;
+  const app = await iniciar({
+    fetchImpl: async () => {
+      chamadas += 1;
+      return new Response("{}", { status: 200 });
+    }
+  });
+  try {
+    const resposta = await fetch(`${app.base}/internal/mcf-memory/timeline`, {
+      headers: { Authorization: "Bearer errado" }
+    });
+    assert.equal(resposta.status, 401);
+    assert.equal(chamadas, 0);
+    assert.deepEqual(await resposta.json(), { erro: "nao_autorizado" });
+  } finally { app.limpar(); }
+});
+
+test("boundary MCF encaminha write com credencial interna separada", async () => {
+  let chamada;
+  const app = await iniciar({
+    fetchImpl: async (url, opcoes) => {
+      chamada = { url: String(url), opcoes };
+      return new Response(JSON.stringify({ status: "criado", id: "ec-x" }), {
+        status: 201,
+        headers: { "content-type": "application/json" }
+      });
+    }
+  });
+  try {
+    const resposta = await fetch(`${app.base}/internal/mcf-memory/registros`, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer mcf-machine-token",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ evento: { id: "ec-x" }, fontes: [], relacoes: [] })
+    });
+    assert.equal(resposta.status, 201);
+    assert.equal(chamada.url, "https://api.exemplo/cognitive-ledger-api/registros");
+    assert.equal(chamada.opcoes.headers.Authorization, autorizacaoApi);
+    assert.notEqual(chamada.opcoes.headers.Authorization, "Bearer mcf-machine-token");
+    assert.deepEqual(await resposta.json(), { status: "criado", id: "ec-x" });
+  } finally { app.limpar(); }
+});
+
+test("boundary MCF encaminha read-back com token de máquina", async () => {
+  let chamada;
+  const app = await iniciar({
+    fetchImpl: async (url, opcoes) => {
+      chamada = { url: String(url), opcoes };
+      return new Response(JSON.stringify({ registros: [{ id: "ec-x" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" }
+      });
+    }
+  });
+  try {
+    const resposta = await fetch(`${app.base}/internal/mcf-memory/timeline`, {
+      headers: { Authorization: "Bearer mcf-machine-token" }
+    });
+    assert.equal(resposta.status, 200);
+    assert.equal(chamada.url, "https://api.exemplo/cognitive-ledger-api/timeline");
+    assert.equal(chamada.opcoes.headers.Authorization, autorizacaoApi);
+    const corpo = await resposta.text();
+    assert.match(corpo, /ec-x/);
+    assert.doesNotMatch(corpo, /mcf-machine-token/);
+  } finally { app.limpar(); }
 });

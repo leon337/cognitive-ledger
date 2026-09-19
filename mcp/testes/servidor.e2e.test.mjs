@@ -140,3 +140,93 @@ test('E2E MCP expõe só quatro leituras, preserva Bearer e não muta Eventos', 
   assert.ok(chamadasLedger.every(({ authorization }) => authorization === 'Bearer token-lab'));
   assert.ok(chamadasLedger.every(({ pathname }) => !pathname.includes('/registros')));
 });
+
+
+test('E2E MCP write expõe somente registrar_memoria e preserva Bearer', async (t) => {
+  const chamadasLedger = [];
+  const ledger = http.createServer(async (req, res) => {
+    const url = new URL(req.url, 'http://ledger.local');
+    const corpo = await lerCorpo(req);
+    chamadasLedger.push({
+      method: req.method,
+      pathname: url.pathname,
+      authorization: req.headers.authorization,
+      corpo,
+    });
+    if (req.headers.authorization !== 'Bearer token-write-lab') {
+      responderJson(res, 401, { erro: 'bearer_invalido' });
+      return;
+    }
+    if (req.method !== 'POST' || url.pathname !== '/v1/registros') {
+      responderJson(res, 405, { erro: 'rota_nao_permitida' });
+      return;
+    }
+    responderJson(res, 201, {
+      estado: 'ok',
+      receipt: {
+        schema: 'cognitive_ledger_memory_receipt/v1',
+        operacao: 'registrar_memoria',
+        evento_id: corpo.evento.id,
+        provider_status: 'criado',
+        read_back: 'verified',
+        event_sha256: 'a'.repeat(64),
+        receipt_sha256: 'b'.repeat(64),
+      },
+    });
+  });
+  const ledgerUrl = await ouvir(ledger);
+  t.after(() => fechar(ledger));
+
+  const oauth = {
+    supabaseUrl: 'https://example.supabase.co',
+    publishableKey: 'public-test-key',
+    issuer: 'https://example.supabase.co/auth/v1',
+    audience: 'authenticated',
+  };
+  const app = criarAplicacaoMcp({
+    oauth,
+    apiUrl: ledgerUrl,
+    publicBaseUrl: 'http://127.0.0.1:3000',
+    validarToken: async (token) => {
+      if (token !== 'token-write-lab') throw new Error('TOKEN_INVALIDO');
+      return { ownerId: 'owner-lab', clientId: 'cliente-write' };
+    },
+  });
+  const mcp = http.createServer(app);
+  const mcpUrl = await ouvir(mcp);
+  t.after(() => fechar(mcp));
+
+  const transport = new StreamableHTTPClientTransport(new URL(`${mcpUrl}/mcp-write`), {
+    requestInit: { headers: { Authorization: 'Bearer token-write-lab' } },
+  });
+  const client = new Client({ name: 'cliente-write-e2e', version: '0.1.0' });
+  t.after(() => client.close().catch(() => undefined));
+  await client.connect(transport);
+
+  const ferramentas = await client.listTools();
+  assert.deepEqual(ferramentas.tools.map(({ name }) => name), ['registrar_memoria']);
+  assert.equal(ferramentas.tools[0].annotations.readOnlyHint, false);
+  assert.equal(ferramentas.tools[0].annotations.destructiveHint, false);
+  assert.equal(ferramentas.tools[0].annotations.idempotentHint, true);
+
+  const resultado = await client.callTool({
+    name: 'registrar_memoria',
+    arguments: {
+      confirmacao_explicita: true,
+      evento: {
+        id: 'ec-lab-write-e2e-001',
+        timestamp: '2026-09-18T21:00:00-03:00',
+        tipo: 'decisao',
+        titulo: 'Sintetico',
+        resumo: 'Teste E2E MCP write',
+      },
+    },
+  });
+  assert.notEqual(resultado.isError, true);
+  assert.equal(resultado.structuredContent.receipt.read_back, 'verified');
+
+  assert.equal(chamadasLedger.length, 1);
+  assert.equal(chamadasLedger[0].method, 'POST');
+  assert.equal(chamadasLedger[0].pathname, '/v1/registros');
+  assert.equal(chamadasLedger[0].authorization, 'Bearer token-write-lab');
+});

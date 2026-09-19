@@ -4,6 +4,7 @@ import {
   ErroEntradaRecuperacao,
   tratarRotaReadOnly,
 } from "./lib/api-readonly.ts";
+import { ErroMemoriaWrite, tratarRotaWrite } from "./lib/api-write.ts";
 import {
   autenticarClienteOAuth,
   ErroAutorizacao,
@@ -180,6 +181,9 @@ function respostaErroOAuth(erro: unknown) {
 function respostaErroRecuperacao(erro: unknown) {
   if (erro instanceof ErroAutorizacao) return respostaErroOAuth(erro);
   if (erro instanceof ErroEntradaRecuperacao) {
+    return json({ erro: erro.codigo }, erro.status);
+  }
+  if (erro instanceof ErroMemoriaWrite) {
     return json({ erro: erro.codigo }, erro.status);
   }
   if (erro instanceof ErroAuditoria) {
@@ -383,6 +387,47 @@ function repositorioRecuperacao(
   };
 }
 
+function repositorioMemoriaWrite(
+  supabase: ReturnType<typeof adminClient>,
+) {
+  return {
+    registrarEvento: async (entrada: {
+      evento: Record<string, unknown>;
+      fontes: Array<Record<string, unknown>>;
+      relacoes: Array<Record<string, unknown>>;
+    }) => {
+      const { data, error } = await supabase.rpc("registrar_evento_cognitivo", {
+        p_evento: entrada.evento,
+        p_fontes: entrada.fontes,
+        p_relacoes: entrada.relacoes,
+      });
+      if (error) {
+        if (String(error.message || "").includes("COLISAO_ID")) {
+          throw new ErroMemoriaWrite("colisao_de_id", 409);
+        }
+        throw new ErroMemoriaWrite("falha_ao_registrar", 503);
+      }
+      if (data !== "criado" && data !== "existente") {
+        throw new ErroMemoriaWrite("status_registro_invalido", 503);
+      }
+      return data as "criado" | "existente";
+    },
+    obterEvento: async (id: string) => {
+      const { data, error } = await supabase.from("eventos_cognitivos").select(
+        "id,timestamp,tipo,status,titulo,resumo,contexto,projetos,assuntos,ideias,decisoes,hipoteses,questoes_abertas,proximos_passos,metadados",
+      ).eq("id", id).maybeSingle();
+      if (error) throw new ErroMemoriaWrite("readback_indisponivel", 503);
+      return data as Record<string, unknown> | null;
+    },
+    inserirAuditoria: async (registro: Record<string, unknown>) => {
+      const { error } = await supabase.from("auditoria_acessos").insert(
+        registro,
+      );
+      if (error) throw error;
+    },
+  };
+}
+
 function dependenciasIndexacao(
   supabase: ReturnType<typeof adminClient>,
   provedor: ProvedorEmbedding,
@@ -503,6 +548,31 @@ Deno.serve(async (req: Request) => {
         registrarCliente: (entrada) => registrarClienteOAuth(supabase, entrada),
       });
       const provedor = provedorEmbeddingAtual();
+
+      const escrita = await tratarRotaWrite(req, identidade, {
+        repositorio: repositorioMemoriaWrite(supabase),
+      });
+      if (escrita) {
+        const receipt = escrita.corpo.receipt as
+          | Record<string, unknown>
+          | undefined;
+        const eventoId = typeof receipt?.evento_id === "string"
+          ? receipt.evento_id
+          : null;
+        if (eventoId && embeddingsHabilitados(provedor)) {
+          agendarIndexacaoSemBloquear(
+            escrita.corpo,
+            () =>
+              indexarEvento(
+                eventoId,
+                dependenciasIndexacao(supabase, provedor),
+              ),
+            waitUntilRuntime,
+          );
+        }
+        return json(escrita.corpo, escrita.status);
+      }
+
       const resultado = await tratarRotaReadOnly(req, identidade, {
         repositorio: repositorioRecuperacao(supabase),
         provedorEmbedding: provedor,

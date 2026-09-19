@@ -11,6 +11,7 @@ const credencialApi = process.env.COGNITIVE_LEDGER_SENHA;
 const apiUrl = process.env.COGNITIVE_LEDGER_API_URL;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+const cognitiveMemoryToken = process.env.MCF_COGNITIVE_MEMORY_TOKEN || null;
 const porta = Number(process.env.PORT || 10000);
 
 if (!usuario || !credencialApi || !apiUrl || !supabaseUrl || !supabasePublishableKey) {
@@ -69,7 +70,14 @@ if (process.env.COGNITIVE_LEDGER_REINDEXAR_NO_STARTUP === "1") {
 }
 
 const servidor = criarServidor({
-  pastaPublica, usuario, validarAcesso, credencialApi, apiUrl, supabaseUrl, supabasePublishableKey
+  pastaPublica,
+  usuario,
+  validarAcesso,
+  credencialApi,
+  apiUrl,
+  supabaseUrl,
+  supabasePublishableKey,
+  cognitiveMemoryToken
 });
 
 servidor.listen(porta, "0.0.0.0", () => {

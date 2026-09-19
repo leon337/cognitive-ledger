@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { once } from "node:events";
 import { criarServidor, reindexarApi, verificarApi } from "../servidor-diario-core.mjs";
+import { executarSmokeMemoriaMcf } from "../scripts/mcf-cognitive-memory-live-smoke.mjs";
 
 const basic = (usuario, valor) => `Basic ${Buffer.from(`${usuario}:${valor}`).toString("base64")}`;
 const autorizacaoSite = basic("leandro", "site");
@@ -152,4 +153,67 @@ test("reindexa via endpoint Basic interno sem usar credencial humana", async () 
   assert.notEqual(chamada.opcoes.headers.Authorization, autorizacaoSite);
   assert.deepEqual(JSON.parse(chamada.opcoes.body), { limite: 7 });
   assert.deepEqual(resultado, { processados: 7, falhas: 0, restantes_estimados: 2, erros: {} });
+});
+
+
+test("smoke MCF grava e lê de volta sem expor credencial", async () => {
+  const chamadas = [];
+  const registros = [];
+  const fetchImpl = async (url, opcoes) => {
+    chamadas.push({ url: String(url), opcoes });
+    if (String(url).endsWith("/registros")) {
+      const corpo = JSON.parse(opcoes.body);
+      registros.push(corpo.evento);
+      return new Response(JSON.stringify({ status: "criado", id: corpo.evento.id }), {
+        status: 201,
+        headers: { "content-type": "application/json" }
+      });
+    }
+    return new Response(JSON.stringify({ registros }), {
+      status: 200,
+      headers: { "content-type": "application/json" }
+    });
+  };
+  const resultado = await executarSmokeMemoriaMcf({
+    usuario: "leandro",
+    credencialApi: "segredo-interno",
+    apiUrl: "https://api.exemplo/cognitive-ledger-api",
+    eventId: "ec-mcf-memory-e2e-20260918-001",
+    timestamp: "2026-09-18T21:15:00-03:00",
+    fetchImpl
+  });
+  assert.equal(resultado.status, "PASS");
+  assert.equal(resultado.provider_status, "criado");
+  assert.equal(resultado.read_back_verified, true);
+  assert.equal(resultado.event_sha256.length, 64);
+  assert.equal(chamadas.length, 2);
+  assert.match(chamadas[0].opcoes.headers.Authorization, /^Basic /);
+  assert.doesNotMatch(JSON.stringify(resultado), /segredo-interno/);
+});
+
+test("smoke MCF falha fechado quando read-back não encontra o evento", async () => {
+  const fetchImpl = async (url, opcoes) => {
+    if (String(url).endsWith("/registros")) {
+      const corpo = JSON.parse(opcoes.body);
+      return new Response(JSON.stringify({ status: "criado", id: corpo.evento.id }), {
+        status: 201,
+        headers: { "content-type": "application/json" }
+      });
+    }
+    return new Response(JSON.stringify({ registros: [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" }
+    });
+  };
+  await assert.rejects(
+    executarSmokeMemoriaMcf({
+      usuario: "leandro",
+      credencialApi: "segredo-interno",
+      apiUrl: "https://api.exemplo/cognitive-ledger-api",
+      eventId: "ec-mcf-memory-e2e-20260918-002",
+      timestamp: "2026-09-18T21:16:00-03:00",
+      fetchImpl
+    }),
+    /read_back_live_evento_ausente/
+  );
 });

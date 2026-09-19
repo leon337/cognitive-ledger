@@ -37,7 +37,11 @@ function payload(id = "ec-synthetic-write-001") {
       proximos_passos: ["read-back"],
       metadados: { proveniencia: "fixture_sintetica" },
     },
-    fontes: [{ tipo_de_fonte: "teste", provedor: "mcf-lab", conteudo_bruto: "SINTETICO" }],
+    fontes: [{
+      tipo_de_fonte: "teste",
+      provedor: "mcf-lab",
+      conteudo_bruto: "SINTETICO",
+    }],
     relacoes: [],
   };
 }
@@ -50,20 +54,30 @@ function post(corpo: unknown) {
   });
 }
 
-function repositorio(opcoes: { status?: "criado"|"existente"; mismatch?: boolean; auditFail?: boolean } = {}) {
+function repositorio(
+  opcoes: {
+    status?: "criado" | "existente";
+    mismatch?: boolean;
+    auditFail?: boolean;
+  } = {},
+) {
   const auditorias: Array<Record<string, unknown>> = [];
   let persistido: Record<string, unknown> | null = null;
   return {
     auditorias,
     deps: {
       repositorio: {
-        registrarEvento: async ({ evento }: { evento: Record<string, unknown> }) => {
+        registrarEvento: async (
+          { evento }: { evento: Record<string, unknown> },
+        ) => {
           persistido = structuredClone(evento);
           return opcoes.status ?? "criado";
         },
         obterEvento: async (_id: string) => {
           if (!persistido) return null;
-          return opcoes.mismatch ? { ...persistido, resumo: "DIVERGENTE" } : structuredClone(persistido);
+          return opcoes.mismatch
+            ? { ...persistido, resumo: "DIVERGENTE" }
+            : structuredClone(persistido);
         },
         inserirAuditoria: async (r: Record<string, unknown>) => {
           if (opcoes.auditFail) throw new Error("audit down");
@@ -105,7 +119,10 @@ Deno.test("retry idempotente existente retorna 200 e novo Receipt", async () => 
   const r = repositorio({ status: "existente" });
   const res = await tratarRotaWrite(post(payload()), identidade(), r.deps);
   assertEquals(res?.status, 200);
-  assertEquals((res?.corpo.receipt as Record<string, unknown>).provider_status, "existente");
+  assertEquals(
+    (res?.corpo.receipt as Record<string, unknown>).provider_status,
+    "existente",
+  );
 });
 
 Deno.test("read-back divergente falha fechado sem Receipt", async () => {
@@ -136,7 +153,7 @@ Deno.test("rota diferente nao e interceptada e campos desconhecidos sao negados"
   assertEquals(outro, null);
 
   const p = payload();
-  (p.evento as Record<string, unknown>).embedding = [1,2,3];
+  (p.evento as Record<string, unknown>).embedding = [1, 2, 3];
   await assertRejects(
     () => tratarRotaWrite(post(p), identidade(), r.deps),
     ErroMemoriaWrite,

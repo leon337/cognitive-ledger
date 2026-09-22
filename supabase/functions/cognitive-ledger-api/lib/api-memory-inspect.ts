@@ -3,10 +3,7 @@ import {
   exigirCapacidade,
   normalizarPathnameAplicacao,
 } from "./autorizacao.ts";
-import type {
-  IdentidadeLeitura,
-  RepositorioRecuperacao,
-} from "./contratos.ts";
+import type { IdentidadeLeitura, RepositorioRecuperacao } from "./contratos.ts";
 
 const TAMANHO_MAXIMO_CORPO = 8 * 1024;
 const EVENTO_ID = /^[A-Za-z0-9._:-]+$/u;
@@ -170,9 +167,7 @@ export async function tratarRotaMemoryInspect(
       estado: "ok",
       memoria: {
         evento: projetar(evento, CAMPOS_EVENTO),
-        relacoes: relacoes.map((relacao) =>
-          projetar(relacao, CAMPOS_RELACAO)
-        ),
+        relacoes: relacoes.map((relacao) => projetar(relacao, CAMPOS_RELACAO)),
       },
     },
   };

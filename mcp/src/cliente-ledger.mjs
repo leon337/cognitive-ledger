@@ -105,5 +105,9 @@ export function criarClienteLedger({ apiUrl, token, fetchImpl = fetch }) {
       requisitar('/v1/contexto', { method: 'POST', body: entrada }),
     lerFonteBruta: (entrada) =>
       requisitar('/v1/fonte', { method: 'POST', body: entrada }),
+    registrarMemoria: (entrada) =>
+      requisitar('/v1/registros', { method: 'POST', body: entrada }),
+    inspecionarMemoria: (entrada) =>
+      requisitar('/v1/memoria/inspecionar', { method: 'POST', body: entrada }),
   });
 }

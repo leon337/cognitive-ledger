@@ -74,3 +74,38 @@ test('cliente limita resposta e não repassa erro interno arbitrário', async ()
     (erro) => erro instanceof ErroClienteLedger && erro.codigo === 'resposta_muito_grande',
   );
 });
+
+
+test('cliente encaminha escrita governada para rota separada', async () => {
+  const chamadas = [];
+  const cliente = criarClienteLedger({
+    apiUrl: 'http://127.0.0.1:54321/functions/v1/cognitive-ledger-api',
+    token: 'token-write-lab',
+    fetchImpl: async (url, opcoes) => {
+      chamadas.push({ url: new URL(url), opcoes });
+      return new Response(JSON.stringify({
+        estado: 'ok',
+        receipt: {
+          schema: 'cognitive_ledger_memory_receipt/v1',
+          evento_id: 'ec-lab-write-001',
+          read_back: 'verified',
+        },
+      }), { status: 201, headers: { 'Content-Type': 'application/json' } });
+    },
+  });
+  const resultado = await cliente.registrarMemoria({
+    confirmacao_explicita: true,
+    evento: {
+      id: 'ec-lab-write-001',
+      timestamp: '2026-09-18T21:00:00-03:00',
+      tipo: 'decisao',
+      titulo: 'Sintetico',
+      resumo: 'Teste',
+    },
+  });
+  assert.equal(resultado.receipt.read_back, 'verified');
+  assert.equal(chamadas.length, 1);
+  assert.equal(chamadas[0].url.pathname, '/functions/v1/cognitive-ledger-api/v1/registros');
+  assert.equal(chamadas[0].opcoes.method, 'POST');
+  assert.equal(chamadas[0].opcoes.headers.Authorization, 'Bearer token-write-lab');
+});

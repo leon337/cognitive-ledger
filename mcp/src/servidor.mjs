@@ -4,7 +4,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import { criarClienteLedger, normalizarApiUrl } from './cliente-ledger.mjs';
-import { registrarFerramentas } from './ferramentas.mjs';
+import {
+  registrarFerramentaEscrita,
+  registrarFerramentaInspecao,
+  registrarFerramentas,
+} from './ferramentas.mjs';
 import {
   criarConfiguracaoOAuth,
   criarValidadorJwtOAuth,
@@ -37,6 +41,16 @@ function criarServidorFerramentas(cliente) {
     version: '0.1.0-lab',
   });
   registrarFerramentas(server, cliente);
+  return server;
+}
+
+function criarServidorEscrita(cliente) {
+  const server = new McpServer({
+    name: 'cognitive-ledger-governed-write',
+    version: '0.2.0',
+  });
+  registrarFerramentaEscrita(server, cliente);
+  registrarFerramentaInspecao(server, cliente);
   return server;
 }
 
@@ -118,6 +132,49 @@ export function criarAplicacaoMcp(opcoes = {}) {
     }
 
     const server = criarServidorFerramentas(clienteFactory(token));
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      enableJsonResponse: true,
+    });
+    try {
+      await server.connect(transport);
+      await transport.handleRequest(req, res, req.body);
+    } catch {
+      if (!res.headersSent) {
+        headersPrivados(res);
+        res.status(500).json({
+          jsonrpc: '2.0',
+          error: { code: -32603, message: 'Internal server error' },
+          id: null,
+        });
+      }
+    } finally {
+      await transport.close().catch(() => undefined);
+      await server.close().catch(() => undefined);
+    }
+  });
+
+  app.all('/mcp-write', async (req, res) => {
+    let token;
+    try {
+      token = extrairBearer(req.headers.authorization);
+      await validarToken(token);
+    } catch {
+      responderNaoAutorizado(res, metadataUrl);
+      return;
+    }
+
+    if (req.method !== 'POST') {
+      headersPrivados(res);
+      res.set('Allow', 'POST').status(405).json({
+        jsonrpc: '2.0',
+        error: { code: -32000, message: 'Method not allowed.' },
+        id: null,
+      });
+      return;
+    }
+
+    const server = criarServidorEscrita(clienteFactory(token));
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,

@@ -160,5 +160,6 @@ Deno.test("inspect rejeita evento ausente, JSON/campos invalidos e metodo errado
   assertEquals(metodo, {
     status: 405,
     corpo: { erro: "metodo_nao_permitido" },
+    headers: { Allow: "POST" },
   });
 });

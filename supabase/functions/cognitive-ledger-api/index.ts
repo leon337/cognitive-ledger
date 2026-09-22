@@ -4,6 +4,10 @@ import {
   ErroEntradaRecuperacao,
   tratarRotaReadOnly,
 } from "./lib/api-readonly.ts";
+import {
+  ErroMemoriaInspect,
+  tratarRotaMemoryInspect,
+} from "./lib/api-memory-inspect.ts";
 import { ErroMemoriaWrite, tratarRotaWrite } from "./lib/api-write.ts";
 import {
   autenticarClienteOAuth,
@@ -186,6 +190,9 @@ function respostaErroRecuperacao(erro: unknown) {
   if (erro instanceof ErroMemoriaWrite) {
     return json({ erro: erro.codigo }, erro.status);
   }
+  if (erro instanceof ErroMemoriaInspect) {
+    return json({ erro: erro.codigo }, erro.status);
+  }
   if (erro instanceof ErroAuditoria) {
     return json({ erro: "auditoria_indisponivel" }, 503);
   }
@@ -300,6 +307,7 @@ const CAMPOS_RECUPERACAO = [
   "hipoteses",
   "questoes_abertas",
   "proximos_passos",
+  "metadados",
 ].join(",");
 
 function repositorioRecuperacao(
@@ -571,6 +579,13 @@ Deno.serve(async (req: Request) => {
           );
         }
         return json(escrita.corpo, escrita.status);
+      }
+
+      const inspecao = await tratarRotaMemoryInspect(req, identidade, {
+        repositorio: repositorioRecuperacao(supabase),
+      });
+      if (inspecao) {
+        return json(inspecao.corpo, inspecao.status, inspecao.headers);
       }
 
       const resultado = await tratarRotaReadOnly(req, identidade, {

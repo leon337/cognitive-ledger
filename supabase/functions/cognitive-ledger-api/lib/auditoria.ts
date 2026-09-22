@@ -3,6 +3,7 @@ import type { EntradaAuditoria } from "./contratos.ts";
 export class ErroAuditoria extends Error {
   constructor(public status = 503, public codigo = "AUDITORIA_INDISPONIVEL") {
     super(codigo);
+    this.name = "ErroAuditoria";
   }
 }
 

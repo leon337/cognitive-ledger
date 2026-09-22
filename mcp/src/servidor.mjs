@@ -4,7 +4,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import { criarClienteLedger, normalizarApiUrl } from './cliente-ledger.mjs';
-import { registrarFerramentaEscrita, registrarFerramentas } from './ferramentas.mjs';
+import {
+  registrarFerramentaEscrita,
+  registrarFerramentaInspecao,
+  registrarFerramentas,
+} from './ferramentas.mjs';
 import {
   criarConfiguracaoOAuth,
   criarValidadorJwtOAuth,
@@ -43,9 +47,10 @@ function criarServidorFerramentas(cliente) {
 function criarServidorEscrita(cliente) {
   const server = new McpServer({
     name: 'cognitive-ledger-governed-write',
-    version: '0.1.0',
+    version: '0.2.0',
   });
   registrarFerramentaEscrita(server, cliente);
+  registrarFerramentaInspecao(server, cliente);
   return server;
 }
 
@@ -148,7 +153,6 @@ export function criarAplicacaoMcp(opcoes = {}) {
       await server.close().catch(() => undefined);
     }
   });
-
 
   app.all('/mcp-write', async (req, res) => {
     let token;

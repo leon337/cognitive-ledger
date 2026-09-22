@@ -1,7 +1,4 @@
-import {
-  assertEquals,
-  assertRejects,
-} from "jsr:@std/assert@1.0.19";
+import { assertEquals, assertRejects } from "jsr:@std/assert@1.0.19";
 import {
   ErroMemoriaInspect,
   tratarRotaMemoryInspect,
@@ -94,11 +91,12 @@ Deno.test("inspect exige capability e scope correspondente", async () => {
 
 Deno.test("inspect bloqueia direct-ID fora do scope sem vazar evento", async () => {
   const erro = await assertRejects(
-    () => tratarRotaMemoryInspect(
-      req({ evento_id: "evt-1", memory_scope: "project:outro" }),
-      identidade,
-      { repositorio: repositorio() },
-    ),
+    () =>
+      tratarRotaMemoryInspect(
+        req({ evento_id: "evt-1", memory_scope: "project:outro" }),
+        identidade,
+        { repositorio: repositorio() },
+      ),
     ErroMemoriaInspect,
   );
   assertEquals(erro.status, 403);
@@ -107,39 +105,46 @@ Deno.test("inspect bloqueia direct-ID fora do scope sem vazar evento", async () 
 
 Deno.test("inspect nao retorna fonte bruta e falha fechado sem auditoria", async () => {
   const erro = await assertRejects(
-    () => tratarRotaMemoryInspect(
-      req({ evento_id: "evt-1", memory_scope: "project:mcf" }),
-      identidade,
-      {
-        repositorio: repositorio({
-          inserirAuditoria: async () => {
-            throw new Error("audit-down");
-          },
-        }),
-      },
-    ),
+    () =>
+      tratarRotaMemoryInspect(
+        req({ evento_id: "evt-1", memory_scope: "project:mcf" }),
+        identidade,
+        {
+          repositorio: repositorio({
+            inserirAuditoria: async () => {
+              throw new Error("audit-down");
+            },
+          }),
+        },
+      ),
   );
   assertEquals(erro.name, "ErroAuditoria");
 });
 
 Deno.test("inspect rejeita evento ausente, JSON/campos invalidos e metodo errado", async () => {
   const ausente = await assertRejects(
-    () => tratarRotaMemoryInspect(
-      req({ evento_id: "evt-ausente", memory_scope: "project:mcf" }),
-      identidade,
-      { repositorio: repositorio({ obterEvento: async () => null }) },
-    ),
+    () =>
+      tratarRotaMemoryInspect(
+        req({ evento_id: "evt-ausente", memory_scope: "project:mcf" }),
+        identidade,
+        { repositorio: repositorio({ obterEvento: async () => null }) },
+      ),
     ErroMemoriaInspect,
   );
   assertEquals(ausente.status, 404);
 
-  for (const body of [
-    {},
-    { evento_id: "evt-1" },
-    { evento_id: "evt-1", memory_scope: "project:mcf", extra: true },
-  ]) {
+  for (
+    const body of [
+      {},
+      { evento_id: "evt-1" },
+      { evento_id: "evt-1", memory_scope: "project:mcf", extra: true },
+    ]
+  ) {
     await assertRejects(
-      () => tratarRotaMemoryInspect(req(body), identidade, { repositorio: repositorio() }),
+      () =>
+        tratarRotaMemoryInspect(req(body), identidade, {
+          repositorio: repositorio(),
+        }),
       ErroMemoriaInspect,
     );
   }
@@ -149,5 +154,8 @@ Deno.test("inspect rejeita evento ausente, JSON/campos invalidos e metodo errado
     identidade,
     { repositorio: repositorio() },
   );
-  assertEquals(metodo, { status: 405, corpo: { erro: "metodo_nao_permitido" } });
+  assertEquals(metodo, {
+    status: 405,
+    corpo: { erro: "metodo_nao_permitido" },
+  });
 });

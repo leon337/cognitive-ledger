@@ -100,7 +100,6 @@ export function registrarFerramentas(server, cliente) {
   }
 }
 
-
 const annotationsEscrita = Object.freeze({
   readOnlyHint: false,
   destructiveHint: false,
@@ -158,19 +157,38 @@ export const DESCRITOR_FERRAMENTA_ESCRITA = Object.freeze({
   metodo: 'registrarMemoria',
 });
 
-export function registrarFerramentaEscrita(server, cliente) {
-  const d = DESCRITOR_FERRAMENTA_ESCRITA;
-  server.registerTool(d.nome, {
-    title: d.titulo,
-    description: d.descricao,
-    inputSchema: d.inputSchema,
-    annotations: d.annotations,
+export const DESCRITOR_FERRAMENTA_INSPECAO = Object.freeze({
+  nome: 'inspecionar_memoria',
+  titulo: 'Inspecionar memória governada',
+  descricao: 'Inspeciona um Evento Cognitivo e suas relações dentro de um escopo explícito, sem devolver fonte bruta.',
+  inputSchema: {
+    evento_id: z.string().trim().min(1).max(256),
+    memory_scope: z.string().trim().min(1).max(512),
+  },
+  annotations,
+  metodo: 'inspecionarMemoria',
+});
+
+function registrarDescritor(server, cliente, descritor) {
+  server.registerTool(descritor.nome, {
+    title: descritor.titulo,
+    description: descritor.descricao,
+    inputSchema: descritor.inputSchema,
+    annotations: descritor.annotations,
   }, async (entrada) => {
     try {
-      const dados = await cliente[d.metodo](entrada);
+      const dados = await cliente[descritor.metodo](entrada);
       return respostaEstruturada(dados);
     } catch (erro) {
       return respostaErro(erro);
     }
   });
+}
+
+export function registrarFerramentaEscrita(server, cliente) {
+  registrarDescritor(server, cliente, DESCRITOR_FERRAMENTA_ESCRITA);
+}
+
+export function registrarFerramentaInspecao(server, cliente) {
+  registrarDescritor(server, cliente, DESCRITOR_FERRAMENTA_INSPECAO);
 }

@@ -19,7 +19,9 @@ const identidade: IdentidadeLeitura = {
 
 function repositorio(overrides: Record<string, unknown> = {}) {
   return {
-    obterEvento: async (_id: string) => ({
+    listarEventos: async () => [],
+    buscarEventos: async () => [],
+    obterEventosPorIds: async (_ids: string[]) => [{
       id: "evt-1",
       timestamp: "2026-09-22T20:00:00-03:00",
       tipo: "decisao",
@@ -35,13 +37,14 @@ function repositorio(overrides: Record<string, unknown> = {}) {
       questoes_abertas: [],
       proximos_passos: [],
       metadados: { memory_scope: "project:mcf" },
-    }),
-    obterRelacoes: async (_id: string) => [{
+    }],
+    obterRelacoes: async (_ids: string[]) => [{
       evento_origem_id: "evt-1",
       evento_destino_id: "evt-0",
       tipo: "DERIVED_FROM",
       rotulo: "derivado",
     }],
+    obterFonte: async () => null,
     inserirAuditoria: async (_registro: Record<string, unknown>) => undefined,
     ...overrides,
   };
@@ -98,7 +101,7 @@ Deno.test("inspect bloqueia direct-ID fora do scope sem vazar evento", async () 
         { repositorio: repositorio() },
       ),
     ErroMemoriaInspect,
-  );
+  ) as ErroMemoriaInspect;
   assertEquals(erro.status, 403);
   assertEquals(erro.codigo, "scope_negado");
 });
@@ -117,7 +120,7 @@ Deno.test("inspect nao retorna fonte bruta e falha fechado sem auditoria", async
           }),
         },
       ),
-  );
+  ) as Error;
   assertEquals(erro.name, "ErroAuditoria");
 });
 
@@ -127,10 +130,10 @@ Deno.test("inspect rejeita evento ausente, JSON/campos invalidos e metodo errado
       tratarRotaMemoryInspect(
         req({ evento_id: "evt-ausente", memory_scope: "project:mcf" }),
         identidade,
-        { repositorio: repositorio({ obterEvento: async () => null }) },
+        { repositorio: repositorio({ obterEventosPorIds: async () => [] }) },
       ),
     ErroMemoriaInspect,
-  );
+  ) as ErroMemoriaInspect;
   assertEquals(ausente.status, 404);
 
   for (

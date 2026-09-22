@@ -1,5 +1,8 @@
 import { auditarLeitura } from "./auditoria.ts";
-import { exigirCapacidade } from "./autorizacao.ts";
+import {
+  exigirCapacidade,
+  normalizarPathnameAplicacao,
+} from "./autorizacao.ts";
 import type {
   IdentidadeLeitura,
   RepositorioRecuperacao,
@@ -121,6 +124,9 @@ export async function tratarRotaMemoryInspect(
   identidade: IdentidadeLeitura,
   deps: DependenciasMemoryInspect,
 ): Promise<ResultadoMemoryInspect | null> {
+  const pathname = normalizarPathnameAplicacao(new URL(req.url).pathname);
+  if (pathname !== "/v1/memoria/inspecionar") return null;
+
   if (req.method !== "POST") {
     return {
       status: 405,

@@ -19,15 +19,16 @@ if (!usuario || !credencialApi || !apiUrl || !supabaseUrl || !supabasePublishabl
   process.exit(1);
 }
 
+let apiDisponivel = false;
 try {
   const verificacao = await verificarApi({ usuario, credencialApi, apiUrl });
+  apiDisponivel = true;
   console.log(`API operacional validada: ${verificacao.total} registro(s) disponíveis.`);
 } catch (erro) {
-  console.error(`Falha no smoke test da API: ${erro.message}`);
-  process.exit(1);
+  console.warn(`API indisponível no startup (${erro.name}, HTTP ${erro.status || "n/a"}); serviço inicia degradado. Consulte /health/ready.`);
 }
 
-if (process.env.MCF_COGNITIVE_MEMORY_E2E_ENABLE === "1") {
+if (apiDisponivel && process.env.MCF_COGNITIVE_MEMORY_E2E_ENABLE === "1") {
   try {
     const resultado = await executarSmokeMemoriaMcf({
       usuario,
@@ -47,7 +48,7 @@ if (process.env.MCF_COGNITIVE_MEMORY_E2E_ENABLE === "1") {
   }
 }
 
-if (process.env.COGNITIVE_LEDGER_REINDEXAR_NO_STARTUP === "1") {
+if (apiDisponivel && process.env.COGNITIVE_LEDGER_REINDEXAR_NO_STARTUP === "1") {
   try {
     let totalProcessados = 0;
     let totalFalhas = 0;

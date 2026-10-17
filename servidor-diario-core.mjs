@@ -2,6 +2,7 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { timingSafeEqual } from "node:crypto";
+import { setTimeout as esperar } from "node:timers/promises";
 
 const tipos = {
   ".html": "text/html; charset=utf-8",
@@ -94,18 +95,31 @@ async function lerCorpo(req, limite = 1024 * 1024) {
   return Buffer.concat(partes);
 }
 
-export async function verificarApi({ usuario, credencialApi, apiUrl, fetchImpl = fetch }) {
+export async function verificarApi({ usuario, credencialApi, apiUrl, fetchImpl = fetch, timeoutMs = 5000, tentativas = 3, esperaMs = 1000 }) {
   if (!usuario || !credencialApi || !apiUrl) throw new Error("configuração da API ausente");
   const apiBase = apiUrl.replace(/\/+$/, "");
   const authorization = criarAutorizacao(usuario, credencialApi);
-  const resposta = await fetchImpl(`${apiBase}/timeline`, {
-    method: "GET",
-    headers: { Authorization: authorization, Accept: "application/json" }
-  });
-  if (!resposta.ok) throw new Error(`API indisponível ou não autorizada: ${resposta.status}`);
-  const dados = await resposta.json();
-  if (!dados || !Array.isArray(dados.registros)) throw new Error("Contrato de timeline inválido");
-  return { status: resposta.status, total: dados.registros.length };
+  for (let tentativa = 1; tentativa <= tentativas; tentativa += 1) {
+    try {
+      const resposta = await fetchImpl(`${apiBase}/timeline`, {
+        method: "GET",
+        headers: { Authorization: authorization, Accept: "application/json" },
+        signal: AbortSignal.timeout(timeoutMs)
+      });
+      if (!resposta.ok) {
+        await resposta.body?.cancel();
+        throw Object.assign(new Error(`API indisponível ou não autorizada: ${resposta.status}`), { status: resposta.status });
+      }
+      const dados = await resposta.json();
+      if (!dados || !Array.isArray(dados.registros)) throw new Error("Contrato de timeline inválido");
+      return { status: resposta.status, total: dados.registros.length };
+    } catch (erro) {
+      const transitorio = erro instanceof TypeError || erro.name === "TimeoutError" ||
+        erro.name === "AbortError" || erro.status === 429 || erro.status >= 500;
+      if (!transitorio || tentativa === tentativas) throw erro;
+      await esperar(esperaMs * 2 ** (tentativa - 1));
+    }
+  }
 }
 
 export async function reindexarApi({ usuario, credencialApi, apiUrl, limite = 10, fetchImpl = fetch }) {
@@ -150,9 +164,41 @@ export function criarServidor({ pastaPublica, usuario, validarAcesso, credencial
     supabaseUrl: supabaseBase,
     publishableKey: supabasePublishableKey
   })});\n`;
+  let verificacaoProntidao = null;
+  let prontidaoValidaAte = 0;
+  let apiPronta = false;
 
   return http.createServer(async (req, res) => {
     const url = new URL(req.url || "/", "http://localhost");
+
+    if (url.pathname === "/health/live" || url.pathname === "/health/ready") {
+      const headers = headersPrivados({ "Content-Type": "application/json; charset=utf-8" });
+      if (req.method !== "GET") {
+        res.writeHead(405, { ...headers, Allow: "GET" });
+        res.end(JSON.stringify({ status: "metodo_nao_permitido" }));
+        return;
+      }
+      try {
+        if (url.pathname === "/health/ready") {
+          if (!verificacaoProntidao && Date.now() >= prontidaoValidaAte) {
+            verificacaoProntidao = verificarApi({ usuario, credencialApi, apiUrl, fetchImpl, tentativas: 1, timeoutMs: 3000 })
+              .then(() => { apiPronta = true; }, () => { apiPronta = false; })
+              .finally(() => {
+                prontidaoValidaAte = Date.now() + 5000;
+                verificacaoProntidao = null;
+              });
+          }
+          await verificacaoProntidao;
+          if (!apiPronta) throw new Error("API_INDISPONIVEL");
+        }
+        res.writeHead(200, headers);
+        res.end(JSON.stringify({ status: "ok" }));
+      } catch {
+        res.writeHead(503, headers);
+        res.end(JSON.stringify({ status: "indisponivel" }));
+      }
+      return;
+    }
 
     if (
       url.pathname === "/internal/mcf-memory/timeline" ||
